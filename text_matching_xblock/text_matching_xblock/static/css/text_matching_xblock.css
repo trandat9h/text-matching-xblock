@@ -1,0 +1,9 @@
+/* CSS for TextMatchingXBlock */
+
+.text_matching_xblock_block .count {
+    font-weight: bold;
+}
+
+.text_matching_xblock_block p {
+    cursor: pointer;
+}
