@@ -21,7 +21,7 @@ def render_template(
 
     root_dir = os.path.dirname(__file__)
     template_dirs = [
-        os.path.join(root_dir, 'static/html'),
+        os.path.join(root_dir, 'templates'),
         os.path.join(root_dir, 'templates/matching')
     ]
 
