@@ -1,6 +1,5 @@
 /* Javascript for TextMatchingXBlock. */
 function TextMatchingXBlock(runtime, element) {
-
     function updateCount(result) {
         $('.count', element).text(result.count);
     }

@@ -1,0 +1,63 @@
+.BlockWrapper {
+    position: relative;
+    height: 200px;
+    width: 200px;
+    margin: 20px;
+}
+
+.Block {
+    /* Allow block to overlap each other */
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    height: 100%;
+}
+
+.Block--typeHollow {
+    background-color: #777777;
+}
+
+.Block--typeHollow .BlockContent{
+    background-color: #bfbbbb;
+
+}
+
+.Block--typeOccupied {
+
+}
+
+.Block--isDraggable {
+    background-color: red;
+}
+
+.Block--typeEmpty {
+
+}
+
+.BlockContent {
+    /*Need further testing*/
+    height: 100%;
+    text-align: center;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Border style */
+    border-style: dashed;
+    border-radius: 5px;
+    border-width: 5px;
+    border-color: black;
+    box-sizing: border-box;
+}
+
+.draggable-source--is-dragging {
+    background-color: greenyellow;
+}
+
+.draggable-mirror {
+    z-index: 100;
+}

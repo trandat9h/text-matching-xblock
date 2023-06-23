@@ -1,0 +1,34 @@
+{#Block element for drag and drop UI#}
+<div>
+    {% if is_draggable %}
+        <div class="BlockWrapper BlockWrapper--isDropzone draggable-dropzone--occupied">
+            <span class="Block Block--typeHollow">
+                <div class="BlockContent">
+                    <h3 class="">
+    {#                    {{ content }}#}
+                        hello world
+                    </h3>
+                </div>
+            </span>
+            <span class="Block Block--isDraggable" title="Click to drag">
+                <div class="BlockContent">
+                    <h3 class="">
+    {#                    {{ content }}#}
+                        hello world
+
+                    </h3>
+                </div>
+            </span>
+        </div>
+    {% else %}
+        <div class="BlockWrapper BlockWrapper--isDropzone">
+            <span class="Block Block--occupied">
+                <div class="BlockContent">
+                    <h3 class="">
+                        {{ content }}
+                    </h3>
+                </div>
+            </span>
+        </div>
+    {% endif %}
+</div>

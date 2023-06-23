@@ -1,0 +1,30 @@
+<div class="MatchingZone" id={{ id }}>
+{#    TODO: Conditional render here to render a pre-define number of questions. For now just fix 3 questions for PIC#}
+    <div class="ZoneWrapper">
+        <p> Prompts Area</p>
+        {% for prompt in prompts %}
+            <div>
+                <h3>{{ prompt }}</h3>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="ZoneWrapper">
+        <p> Answers Area</p>
+        <div class="Answers BlockLayout">
+            {% include "block.html" %}
+            {% include "block.html" %}
+            {% include "block.html" %}
+        </div>
+    </div>
+    <div class="ZoneWrapper">
+        <p> Options Area</p>
+        <div class="Options BlockLayout">
+    {#        TODO: For now just support 1-1 matching between Question and Answer. For long term support we can allow 1 answer#}
+    {#        to be matched with multiple question#}
+
+            {% include "block.html" with is_draggable=True %}
+            {% include "block.html" with is_draggable=True %}
+            {% include "block.html" with is_draggable=True %}
+        </div>
+    </div>
+</div>
