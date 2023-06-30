@@ -1,31 +1,67 @@
 {#Block element for drag and drop UI#}
 <div>
-    {% if is_draggable %}
-        <div class="BlockWrapper BlockWrapper--isDropzone draggable-dropzone--occupied">
-            <span class="Block Block--typeHollow">
+    {% if status == "origin-occupied" %}
+        <div class="BlockWrapper BlockWrapper--isDropzone draggable-dropzone--occupied"
+             data-dropzone-id="{{ dropzone_id }}"
+             data-dropzone-type="{{ dropzone_type }}"
+        >
+                <span class="Block Block--typeHollow">
+                    <div class="BlockContent">
+                        <h3 class="">
+                            {{ text }}
+                        </h3>
+                    </div>
+                </span>
+            <span class="Block Block--isDraggable" title="Click to drag">
+                    <div class="BlockContent">
+                        <h3 class="">
+                            {{ text }}
+                        </h3>
+                    </div>
+                </span>
+        </div>
+    {% elif status == "dropzone-occupied" %}
+        <div class="BlockWrapper BlockWrapper--isDropzone draggable-dropzone--occupied"
+             data-dropzone-id="{{ dropzone_id }}"
+             data-dropzone-type="{{ dropzone_type }}"
+        >
+            <span class="Block Block--occupied">
                 <div class="BlockContent">
                     <h3 class="">
-    {#                    {{ content }}#}
-                        hello world
+                        Fill in this blank
                     </h3>
                 </div>
             </span>
             <span class="Block Block--isDraggable" title="Click to drag">
                 <div class="BlockContent">
                     <h3 class="">
-    {#                    {{ content }}#}
-                        hello world
-
+                        {{ text }}
                     </h3>
                 </div>
             </span>
         </div>
-    {% else %}
-        <div class="BlockWrapper BlockWrapper--isDropzone">
+    {% elif status == "blank" %}
+        <div class="BlockWrapper BlockWrapper--isDropzone"
+             data-dropzone-id="{{ dropzone_id }}"
+             data-dropzone-type="{{ dropzone_type }}"
+        >
             <span class="Block Block--occupied">
                 <div class="BlockContent">
                     <h3 class="">
-                        {{ content }}
+                        Fill in this blank
+                    </h3>
+                </div>
+            </span>
+        </div>
+    {% elif status == "hollow" %}
+        <div class="BlockWrapper BlockWrapper--isDropzone"
+             data-dropzone-id="{{ dropzone_id }}"
+             data-dropzone-type="{{ dropzone_type }}"
+        >
+            <span class="Block Block--typeHollow">
+                <div class="BlockContent">
+                    <h3 class="">
+                        {{ text }}
                     </h3>
                 </div>
             </span>
