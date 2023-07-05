@@ -37,6 +37,14 @@ class TextMatchingXBlock(XBlock):
     """
     TO-DO: document what your XBlock does.
     """
+    display_name = String(
+        display_name="Title",
+        help="The title of the drag and drop problem. The title is displayed to learners.",
+        scope=Scope.settings,
+        default="Text Matching Xblock",
+        enforce_type=True,
+    )
+
     question = String(
         scope=Scope.content,
     )
@@ -77,6 +85,16 @@ class TextMatchingXBlock(XBlock):
         scope=Scope.content,
     )
 
+    correct_answer = Dict(
+        default={
+            '1': '1',
+            '2': '2',
+            '3': '3'
+        },
+        scope=Scope.settings,
+        help="Correct answer for score evaluation"
+    )
+
     student_choices = Dict(
         default={},
         scope=Scope.user_state,
@@ -103,14 +121,10 @@ class TextMatchingXBlock(XBlock):
 
         # This is a hacky way to make block id a valid CSS Selectors
         # With html_id, "+" and ":" is not a valid CSS Selectors
-        _id = _id.replace("+", "").replace(":", "")
 
         # For usage_id, "." change CSS Selectors, so it needs to be replaced too.
-        _id = _id.replace(".", "")
+        return _id.replace("+", "").replace(":", "").replace(".", "")
 
-        return _id
-
-    # TO-DO: change this view to display your data your own way.
     def student_view(self, context=None):
         """
         The primary view of the TextMatchingXBlock, shown to students
@@ -142,12 +156,11 @@ class TextMatchingXBlock(XBlock):
         )
 
         frag.add_javascript(self.resource_string("static/js/src/text_matching_xblock.js"))
-        print(self._get_xblock_unique_id())
         frag.initialize_js(
             'TextMatchingXBlock',
             {
-                "xblock_id": self._get_xblock_unique_id(),
-            },
+                'xblock_id': self._get_xblock_unique_id(),
+            }
         )
 
         return frag
@@ -190,9 +203,9 @@ class TextMatchingXBlock(XBlock):
 
         print(answer_context)
         return {
+            # Block content
+            "display_name": self.display_name,
             "question": "Some dummy question",
-            # TODO: Replace this dummy id will Xblock id for unique. This is IMPORTANT
-            #  since multiple Matching Xblock can be used in one page.
             "id": self._get_xblock_unique_id(),
             "prompts": prompt_context,
             "answers": answer_context,

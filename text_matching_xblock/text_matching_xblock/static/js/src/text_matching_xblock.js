@@ -1,6 +1,7 @@
 /* Javascript for TextMatchingXBlock. */
 
 function TextMatchingXBlock(runtime, element, data) {
+    let xblock_id = data.xblock_id
     function updateCount(result) {
         $('.count', element).text(result.count);
     }
@@ -69,8 +70,6 @@ function TextMatchingXBlock(runtime, element, data) {
     function UniqueDropzone() {
         let draggable = window.Draggable;
         console.debug("Init UniqueDropzone Javascript code ")
-        let xblock_id = data.xblock_id
-        console.debug(xblock_id)
         let containers = document.querySelectorAll(`#${xblock_id} .BlockLayout`);
 
         if (containers.length === 0) {

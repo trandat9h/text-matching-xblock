@@ -1,12 +1,24 @@
 <div class="text_matching_xblock_block">
-    <div class="Question">
-        {{ question }}
+    <h3 class="hd hd-3 problem-header">
+        {{ display_name }}
+    </h3>
+    <div class="problem-progress">
+        1 point possible (ungraded)
     </div>
-    {% include 'matching_zone.html' %}
-
-    <div class="Submission">
-        <button>
-            Submission
-        </button>
+    <div class="problem">
+        <div>
+            <p>
+                {{ question }}
+            </p>
+            {% include 'matching_zone.html' %}
+        </div>
+        <div class="action">
+            <div class="submit-attempt-container">
+                <button type="button" class="submit btn-brand">
+                    <span class="submit-label">Gửi</span>
+                </button>
+            </div>
+        </div>
+        {% include 'submit-notification.html' %}
     </div>
 </div>
