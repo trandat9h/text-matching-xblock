@@ -6,9 +6,11 @@ from collections import defaultdict
 import pkg_resources
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
-from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds
+from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds, Float, Boolean
 
 from text_matching_xblock.utils import render_template
+from xblock.scorable import ScorableXBlockMixin, Score
+from xblockutils.settings import XBlockWithSettingsMixin
 
 
 @dataclasses.dataclass
@@ -33,7 +35,10 @@ class HollowDropzone(Dropzone):
     status: str = "hollow"
 
 
-class TextMatchingXBlock(XBlock):
+class TextMatchingXBlock(
+    XBlock,
+    ScorableXBlockMixin,
+):
     """
     TO-DO: document what your XBlock does.
     """
@@ -99,6 +104,28 @@ class TextMatchingXBlock(XBlock):
         default={},
         scope=Scope.user_state,
         help="A mapping from prompt_id to option_id that has been matched so far."
+    )
+
+    _has_submitted_answer = Boolean(
+        help="Indicates whether a learner has completed the problem at least once",
+        scope=Scope.user_state,
+        default=False,
+        enforce_type=True,
+    )
+
+    weight = Float(
+        display_name="Problem Weight",
+        help="Defines the number of points the problem is worth.",
+        scope=Scope.settings,
+        default=1,
+        enforce_type=True,
+    )
+
+    _raw_earned = Float(
+        help="Keeps maximum score achieved by student as a raw value",
+        scope=Scope.user_state,
+        default=0,
+        enforce_type=True,
     )
 
     def resource_string(self, path):
@@ -270,6 +297,71 @@ class TextMatchingXBlock(XBlock):
             student_choice[first_option_id], student_choice[second_option_id] = student_choice[second_option_id], student_choice[first_option_id]
 
         return {"result": "success"}
+
+    @XBlock.json_handler
+    def submit(self, data, suffix=''):
+        """
+        Handle learner submission and calculate the score
+        """
+        print("Learner submit")
+        print(data)
+
+        # Mark learner has submitted at least once
+        self._has_submitted_answer = True
+
+        # Evaluate submission and save score
+        self.set_score(self.calculate_score())
+
+        self._publish_grade(self.get_score())
+
+        score = self.get_score()
+        if score.raw_earned == score.raw_possible:
+            result = "correct"
+        elif score.raw_earned == 0:
+            result = "incorrect"
+        else:
+            result = "partially_correct"
+
+        return {
+            "result": result,
+            "weight_score_earned": score.raw_earned * self.weight,
+            "weight_score_possible": score.raw_possible * self.weight,
+            # "progress_message": self.get_progress_message() # TODO: Implement this logic later
+        }
+
+    def has_submitted_answer(self) -> bool:
+        return self._has_submitted_answer
+
+    def max_score(self):
+        return 1
+
+    def get_score(self):
+        """
+        Return the problem's current score as raw values.
+        """
+        return Score(
+            raw_earned=self._raw_earned,
+            raw_possible=self.max_score(),
+        )
+
+    def set_score(self, score: Score):
+        self._raw_earned = score.raw_earned
+
+    def calculate_score(self):
+        correct_count = 0
+        total_count = len(list(self.prompts.keys()))
+        for prompt_id, option_id in self.student_choices.items():
+            if option_id == self.correct_answer[prompt_id]:
+                correct_count += 1
+
+        # For now if all prompts are not matched correctly, learner score will be 0
+        raw_score = self.max_score() if correct_count == total_count else 0
+        print(f"Raw score earned {raw_score}")
+
+        return Score(
+            raw_earned=raw_score,
+            raw_possible=self.max_score(),
+        )
 
     @staticmethod
     def workbench_scenarios():

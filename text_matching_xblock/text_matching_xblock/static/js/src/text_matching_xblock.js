@@ -11,32 +11,52 @@ function TextMatchingXBlock(runtime, element, data) {
     let swapOptionsUrl = runtime.handlerUrl(element, 'swap_options');
     let submitUrl = runtime.handlerUrl(element, 'submit');
 
-    // Assign event handler
-    // $('p', element).click(function(eventObject) {
-    //     $.ajax({
-    //         type: "POST",
-    //         url: handlerUrl,
-    //         data: JSON.stringify({"hello": "world"}),
-    //         success: updateCount
-    //     });
-    // });
+    function onSubmitSuccess(response) {
+        let {result, weight_score_earned, weight_score_possible} = response
+
+        let resultNotificationClassSelector, notificationMessage;
+        if (result === "correct") {
+            resultNotificationClassSelector = "correct-answer"
+            notificationMessage = "Correct"
+        } else if (result === "incorrect") {
+            resultNotificationClassSelector = "incorrect-answer"
+            notificationMessage = "Incorrect"
+        } else {
+            resultNotificationClassSelector = "partially-correct-answer"
+            notificationMessage = "Partial Correct"
+        }
+
+        resultNotificationClassSelector = `.notification.${resultNotificationClassSelector}`
+        notificationMessage = `${notificationMessage} (${weight_score_earned}/${weight_score_possible} points)`
+        // Show the result notification color section
+        // Make sure all notification element is hidden first,
+        // this is useful when learner re-score and the result has changed
+        $('.notification', element).addClass("is-hidden")
+        $(resultNotificationClassSelector, element).removeClass("is-hidden")
+
+        // Update notification message
+        $(`${resultNotificationClassSelector} > .notification-message`, element).text(notificationMessage)
+
+        // TODO: Upgrade Progess later
+
+    }
+    // Handle learner submit event
+    $('.submit', element).click(function(eventObject) {
+        $.ajax({
+            type: "POST",
+            url: submitUrl,
+            data: JSON.stringify({}),
+            success: onSubmitSuccess
+        });
+    });
 
     $(function ($) {
         /* Here's where you'd do things on page load. */
     });
 
-    function swapOptions(first_option_id, second_option_id) {
-
-    }
-
-
     function matchOption(answerId, optionId) {
 
         function onUpdateChoiceSuccess(result) {
-
-        }
-
-        function onUpdateChoiceFailed(result) {
 
         }
 
