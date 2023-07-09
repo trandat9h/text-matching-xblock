@@ -2,8 +2,25 @@
     display: flex;
 }
 
+.MatchingZone > ul {
+    list-style-type: none;
+    width: 100%;
+}
+
 .ZoneWrapper {
     display: flex;
     flex-direction: column;
     width: 30%;
+}
+
+.matching-item-wrapper {
+    border-top: 1px solid dimgray;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 100px;
+}
+
+.prompt-wrapper {
+    vertical-align: center;
 }

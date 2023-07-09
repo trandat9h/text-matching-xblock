@@ -1,20 +1,110 @@
 /* Javascript for TextMatchingXBlock. */
 
 function TextMatchingXBlock(runtime, element, data) {
-    let xblock_id = data.xblock_id
-    function updateCount(result) {
-        $('.count', element).text(result.count);
+    let xblockId = data.xblock_id;
+    let responses = data.responses;
+    let learnerChoice = data.learner_choice
+    let learnerTempChoice = learnerChoice
+
+    // Bind onChange event listener to all select element
+    $('.response-wrapper select').each(function () {
+        $(this).change(function () {
+            updateChoice(
+                $(this).data("prompt-id"),
+                $(this).val(),
+            )
+        })
+    })
+
+    // Bind remove event listener
+    $('.matching-item-wrapper .btn-reset-response').each(function () {
+        $(this).click(function () {
+            const promptId = $(this).parent().data('prompt-id')
+            console.debug(`Learner has remove response of prompt: ${promptId}`)
+            updateChoice(promptId, null)
+        })
+    })
+
+
+    function checkSubmitState() {
+        // Enable SUBMIT button when all prompts have responses for the first time
+        // or some responses have changed since last submission.
+        if (Object.keys(learnerTempChoice).length === Object.keys(responses).length)
+            $('.submit', element).prop('disabled', false)
+        else $('.submit', element).prop('disabled', true)
+    }
+
+    function populateAvailableResponses() {
+        // filter available choice
+        let selectedResponseIds = [], availableResponses = [];
+        for (let promptId in learnerTempChoice)
+            selectedResponseIds.push(learnerTempChoice[promptId])
+
+        for (const response of Object.values(responses))
+            if (!selectedResponseIds.includes(response.id)) {
+                availableResponses.push(response)
+            }
+
+        // Populate these available responses to all dropdown options
+        $('.response-wrapper select').each(function () {
+            const promptId = $(this).data('prompt-id')
+            if (promptId in learnerTempChoice) {
+                $(this).find("option").remove()
+                let selectedResponse = responses[learnerTempChoice[promptId]]
+                $(this).append(
+                    `<option value="${selectedResponse.id}" selected>${selectedResponse.text}</option>`
+                )
+            } else {
+                // Leave the default option as the selected one
+                $(this).find("option").remove()
+                $(this).append(
+                    `<option value="" selected disabled>Select your response</option>`
+                )
+
+            }
+
+            for (let response of availableResponses)
+                $(this).append(
+                    `<option value="${response.id}">${response.text}</option>`
+                );
+        })
+    }
+
+    function updateChoice(promptId, responseId) {
+        console.debug("New choice update!")
+        console.debug(`Prompt ID: ${promptId}`)
+        console.debug(`Response ID: ${responseId}`)
+        if (responseId === null)
+            delete learnerTempChoice[promptId]
+        else
+            learnerTempChoice[promptId] = responseId
+        populateAvailableResponses()
+        checkSubmitState()
+    }
+
+    function saveChoice() {
+        function onSaveChoiceSuccess() {
+            // TODO: Implement later
+        }
+
+        $.ajax({
+            type: "POST",
+            url: saveUrl,
+            data: JSON.stringify({
+                'learner_choice': learnerTempChoice
+            }),
+            success: onSaveChoiceSuccess
+        });
     }
 
     // Get Handler URL from XBlock runtime
-    let matchOptionUrl = runtime.handlerUrl(element, 'match_option');
-    let swapOptionsUrl = runtime.handlerUrl(element, 'swap_options');
+    let saveUrl = runtime.handlerUrl(element, 'save_choice')
     let submitUrl = runtime.handlerUrl(element, 'submit');
 
     function onSubmitSuccess(response) {
         let {result, weight_score_earned, weight_score_possible} = response
 
-        let resultNotificationClassSelector, notificationMessage;
+        let resultNotificationClassSelector, notificationMessage
         if (result === "correct") {
             resultNotificationClassSelector = "correct-answer"
             notificationMessage = "Correct"
@@ -37,11 +127,13 @@ function TextMatchingXBlock(runtime, element, data) {
         // Update notification message
         $(`${resultNotificationClassSelector} > .notification-message`, element).text(notificationMessage)
 
-        // TODO: Upgrade Progess later
+        // TODO: Upgrade Progress later
 
     }
+
     // Handle learner submit event
-    $('.submit', element).click(function(eventObject) {
+    $('.submit', element).click(function (eventObject) {
+        saveChoice()
         $.ajax({
             type: "POST",
             url: submitUrl,
@@ -51,8 +143,9 @@ function TextMatchingXBlock(runtime, element, data) {
     });
 
     $(function ($) {
-        /* Here's where you'd do things on page load. */
-    });
+        populateAvailableResponses()
+        checkSubmitState()
+    })
 
     function matchOption(answerId, optionId) {
 
@@ -86,66 +179,4 @@ function TextMatchingXBlock(runtime, element, data) {
             success: onSwapOptionsSuccess
         });
     }
-
-    function UniqueDropzone() {
-        let draggable = window.Draggable;
-        console.debug("Init UniqueDropzone Javascript code ")
-        let containers = document.querySelectorAll(`#${xblock_id} .BlockLayout`);
-
-        if (containers.length === 0) {
-            return false;
-        }
-
-        const droppable = new draggable.Droppable(containers, {
-            draggable: '.Block--isDraggable',
-            dropzone: '.BlockWrapper--isDropzone',
-            mirror: {
-                constrainDimensions: true,
-            },
-        });
-
-        let originZoneId, originZoneType, targetZoneId, targetZoneType;
-
-        // --- Drag start events --- //
-        droppable.on('drag:start', (evt) => {
-            console.debug("Drag starting!!")
-
-            let origin = evt.originalSource.parentNode.dataset
-            originZoneId = origin.dropzoneId;
-            originZoneType = origin.dropzoneType;
-
-        });
-
-        // --- Drop stopped events --- //
-        droppable.on('droppable:dropped', (evt) => {
-            let targetDropzone = evt.dropzone.dataset;
-
-            targetZoneId = targetDropzone.dropzoneId;
-            targetZoneType = targetDropzone.dropzoneType;
-            console.debug(targetZoneId)
-
-            // TODO: Do some validation here
-
-            // Handle student choice
-            if (originZoneType === "Answer" && targetZoneType === "Option") {
-                // Student remove current option
-                console.debug("Student remove current option")
-                matchOption(originZoneId, null)
-            } else if (originZoneType === "Option" && targetZoneType === "Answer") {
-                console.debug("Student select an option")
-                matchOption(targetZoneId, originZoneId)
-            } else if (originZoneType === "Answer" && targetZoneType == "Answer") {
-                // Student try to match the option to another answer
-                // TODO: Find a way to handle this atomically, for now just cancel this type of event
-                console.debug("Student move the option to another answer.")
-                swapOptions(originZoneId, targetZoneId)
-            } else {
-                console.error("Not implement this combination.")
-            }
-        });
-
-        return droppable;
-    }
-
-    UniqueDropzone()
 }

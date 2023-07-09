@@ -1,26 +1,25 @@
 <div class="MatchingZone" id={{ id }}>
-    <div class="ZoneWrapper">
-        <p> Prompts Area</p>
-        {% for prompt in prompts %}
-            <div>
-                <h3>{{ prompt.text }}</h3>
-            </div>
+    <ul>
+        {% for matching_item in matching_items %}
+            <li>
+                <div class="matching-item-wrapper" data-prompt-id={{ matching_item.prompt.id }}>
+                    <div class="prompt-wrapper">
+                        <p>
+                            {{ matching_item.prompt.text }}
+                        </p>
+                    </div>
+                    <div class="response-wrapper">
+                        <label>
+                            <select class="ui dropdown" data-prompt-id={{ matching_item.prompt.id }}>
+                                <option value="" selected disabled>Select your response</option>
+                                <option value="1">Male</option>
+                                <option value="0">Female</option>
+                            </select>
+                        </label>
+                    </div>
+                    <span class="fa fa-refresh btn-reset-response" aria-hidden="true"></span>
+                </div>
+            </li>
         {% endfor %}
-    </div>
-    <div class="ZoneWrapper">
-        <p> Answers Area</p>
-        <div class="Answers BlockLayout">
-            {% for answer in answers %}
-                {% include "block.html" with dropzone_id=answer.id dropzone_type="Answer" text=answer.text status=answer.status %}
-            {% endfor %}
-        </div>
-    </div>
-    <div class="ZoneWrapper">
-        <p> Options Area</p>
-        <div class="Options BlockLayout">
-            {% for option in options %}
-                {% include "block.html" with is_draggable=True dropzone_id=option.id dropzone_type="Option" text=option.text status=option.status %}
-            {% endfor %}
-        </div>
-    </div>
+    </ul>
 </div>
