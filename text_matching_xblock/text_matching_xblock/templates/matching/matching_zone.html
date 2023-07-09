@@ -10,14 +10,16 @@
                     </div>
                     <div class="response-wrapper">
                         <label>
-                            <select class="ui dropdown" data-prompt-id={{ matching_item.prompt.id }}>
+                            <select class="ui dropdown response-options" data-prompt-id={{ matching_item.prompt.id }}>
                                 <option value="" selected disabled>Select your response</option>
                                 <option value="1">Male</option>
                                 <option value="0">Female</option>
                             </select>
                         </label>
+                        <span class="fa fa-refresh btn-reset-response" aria-hidden="true" data-prompt-id={{ matching_item.prompt.id }}></span>
                     </div>
-                    <span class="fa fa-refresh btn-reset-response" aria-hidden="true"></span>
+                    <div class="answer-wrapper">
+                    </div>
                 </div>
             </li>
         {% endfor %}

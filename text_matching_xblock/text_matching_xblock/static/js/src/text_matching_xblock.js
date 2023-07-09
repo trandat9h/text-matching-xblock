@@ -7,7 +7,7 @@ function TextMatchingXBlock(runtime, element, data) {
     let learnerTempChoice = learnerChoice
 
     // Bind onChange event listener to all select element
-    $('.response-wrapper select').each(function () {
+    $('.response-wrapper select', element).each(function () {
         $(this).change(function () {
             updateChoice(
                 $(this).data("prompt-id"),
@@ -19,7 +19,7 @@ function TextMatchingXBlock(runtime, element, data) {
     // Bind remove event listener
     $('.matching-item-wrapper .btn-reset-response').each(function () {
         $(this).click(function () {
-            const promptId = $(this).parent().data('prompt-id')
+            const promptId = $(this).data('prompt-id')
             console.debug(`Learner has remove response of prompt: ${promptId}`)
             updateChoice(promptId, null)
         })
@@ -46,7 +46,7 @@ function TextMatchingXBlock(runtime, element, data) {
             }
 
         // Populate these available responses to all dropdown options
-        $('.response-wrapper select').each(function () {
+        $('.response-wrapper select', element).each(function () {
             const promptId = $(this).data('prompt-id')
             if (promptId in learnerTempChoice) {
                 $(this).find("option").remove()
