@@ -2,6 +2,7 @@
 import dataclasses
 import uuid
 from collections import defaultdict
+from copy import copy
 
 import pkg_resources
 from web_fragments.fragment import Fragment
@@ -10,7 +11,6 @@ from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds, Float, B
 
 from text_matching_xblock.utils import render_template
 from xblock.scorable import ScorableXBlockMixin, Score
-from xblockutils.settings import XBlockWithSettingsMixin
 
 
 @dataclasses.dataclass
@@ -50,8 +50,12 @@ class TextMatchingXBlock(
         enforce_type=True,
     )
 
-    question = String(
-        scope=Scope.content,
+    description = String(
+        display_name="Question",
+        help="The description of the problem",
+        scope=Scope.settings,
+        default="",
+        enforce_type=True,
     )
 
     prompts = Dict(
@@ -75,7 +79,7 @@ class TextMatchingXBlock(
     options = Dict(
         default={
             "1": {
-                "text": "Option 1",
+                "text": "OptionffffOptionffffOptionffffOptionffff",
                 "id": "1",
             },
             "2": {
@@ -87,7 +91,7 @@ class TextMatchingXBlock(
                 "id": "3",
             },
         },
-        scope=Scope.content,
+        scope=Scope.settings,
     )
 
     correct_answer = Dict(
@@ -150,7 +154,14 @@ class TextMatchingXBlock(
         # With html_id, "+" and ":" is not a valid CSS Selectors
 
         # For usage_id, "." change CSS Selectors, so it needs to be replaced too.
-        return _id.replace("+", "").replace(":", "").replace(".", "")
+        # _id = _id.replace("+", "")
+        # _id = _id.replace(":", "")
+        # _id = _id.replace(".", "")
+
+        # TODO: Replace this mock id with real random id
+        _id = "randomidaiudbquwbc"
+
+        return _id
 
     def student_view(self, context=None):
         """
@@ -158,6 +169,22 @@ class TextMatchingXBlock(
         when viewing courses.
         """
         frag = Fragment()
+
+        js_urls = [
+            "static/js/lib/semantic-ui.js",
+            "static/js/src/text_matching_xblock.js",
+        ]
+        for js_url in js_urls:
+            frag.add_javascript(self.resource_string(js_url))
+        # frag.add_javascript_url("https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.js")
+        frag.initialize_js(
+            'TextMatchingXBlock',
+            {
+                'xblock_id': self._get_xblock_unique_id(),
+                'responses': self.options,
+                'learner_choice': self.student_choices,
+            }
+        )
 
         html = render_template(
             template_name="text_matching_xblock.html",
@@ -172,25 +199,53 @@ class TextMatchingXBlock(
         )
         for css_resource in css_resources:
             frag.add_css(self.resource_string(css_resource))
+        frag.add_css_url("//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.css")
 
         # Do not understand why 'add_javascript_url' default put script in body
         # instead of head, but to solve this issue, explicitly call 'add_resource_url'
         # to specify where to put this resource script.
-        frag.add_resource_url(
-            url="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js",
-            mimetype='application/javascript',
-            placement='head',
-        )
-
-        frag.add_javascript(self.resource_string("static/js/src/text_matching_xblock.js"))
-        frag.initialize_js(
-            'TextMatchingXBlock',
-            {
-                'xblock_id': self._get_xblock_unique_id(),
-            }
-        )
+        # frag.add_resource_url(
+        #     url="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js",
+        #     mimetype='application/javascript',
+        #     placement='head',
+        # )
 
         return frag
+
+    def studio_view(self, content=None):
+        frag = Fragment()
+
+        js_urls = [
+            "static/js/src/text_matching_studio.js",
+        ]
+        for js_url in js_urls:
+            frag.add_javascript(self.resource_string(js_url))
+        frag.initialize_js('TextMatchingStudioXBlock')
+
+        html = render_template(
+            template_name="text_matching_studio.html",
+            context={
+                "display_name": self.display_name,
+                "description": self.description,
+                "matching_items": [
+                    {
+                        "prompt": self.prompts[prompt_id],
+                        "response": self.options[option_id]
+                    }
+                    for prompt_id, option_id in self.correct_answer.items()
+                ],
+                "weight": self.weight,
+            },
+        )
+        frag.add_content(html)
+
+        css_resources = (
+            "static/css/text_matching_xblock.css",
+            "static/css/matching/block.css",
+            "static/css/matching/matching_zone.css"
+        )
+        for css_resource in css_resources:
+            frag.add_css(self.resource_string(css_resource))
 
     def prepare_matching_zone_template_context(self) -> dict:
         prompt_context = list(self.prompts.values())
@@ -234,6 +289,13 @@ class TextMatchingXBlock(
             "display_name": self.display_name,
             "question": "Some dummy question",
             "id": self._get_xblock_unique_id(),
+            "matching_items": [
+                {
+                    "prompt": self.prompts[prompt_id],
+                    "response": self.options[option_id],
+                }
+                for prompt_id, option_id in self.correct_answer.items()
+            ],
             "prompts": prompt_context,
             "answers": answer_context,
             "options": option_context,
@@ -294,7 +356,8 @@ class TextMatchingXBlock(
         # If 2 options are chosen, swap those
         else:
             # Swap 2 options
-            student_choice[first_option_id], student_choice[second_option_id] = student_choice[second_option_id], student_choice[first_option_id]
+            student_choice[first_option_id], student_choice[second_option_id] = student_choice[second_option_id], \
+                student_choice[first_option_id]
 
         return {"result": "success"}
 
@@ -328,6 +391,12 @@ class TextMatchingXBlock(
             "weight_score_possible": score.raw_possible * self.weight,
             # "progress_message": self.get_progress_message() # TODO: Implement this logic later
         }
+
+    @XBlock.json_handler
+    def save_choice(self, data, suffix=''):
+        # TODO: Validate data later, for now we will trust FE
+        self.student_choices = data["learner_choice"]
+        return {}
 
     def has_submitted_answer(self) -> bool:
         return self._has_submitted_answer
