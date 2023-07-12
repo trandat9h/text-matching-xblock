@@ -11,6 +11,7 @@ from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds, Float, B
 
 from text_matching_xblock.utils import render_template
 from xblock.scorable import ScorableXBlockMixin, Score
+from xblockutils.studio_editable import StudioEditableXBlockMixin
 
 
 @dataclasses.dataclass
@@ -38,6 +39,7 @@ class HollowDropzone(Dropzone):
 class TextMatchingXBlock(
     XBlock,
     ScorableXBlockMixin,
+    StudioEditableXBlockMixin,
 ):
     """
     TO-DO: document what your XBlock does.
@@ -212,7 +214,7 @@ class TextMatchingXBlock(
 
         return frag
 
-    def studio_view(self, content=None):
+    def studio_view(self, context=None):
         frag = Fragment()
 
         js_urls = [
@@ -220,13 +222,10 @@ class TextMatchingXBlock(
         ]
         for js_url in js_urls:
             frag.add_javascript(self.resource_string(js_url))
-        frag.initialize_js('TextMatchingStudioXBlock')
-
-        html = render_template(
-            template_name="text_matching_studio.html",
-            context={
-                "display_name": self.display_name,
-                "description": self.description,
+        frag.initialize_js('TextMatchingStudioXBlock', {
+            'settings': {
+                "display_name": self._prepare_field_context("display_name"),
+                "description": self._prepare_field_context("description"),
                 "matching_items": [
                     {
                         "prompt": self.prompts[prompt_id],
@@ -234,7 +233,23 @@ class TextMatchingXBlock(
                     }
                     for prompt_id, option_id in self.correct_answer.items()
                 ],
-                "weight": self.weight,
+                "weight": self._prepare_field_context("weight"),
+            }
+        })
+
+        html = render_template(
+            template_name="text_matching_studio.html",
+            context={
+                "display_name": self._prepare_field_context("display_name"),
+                "description": self._prepare_field_context("description"),
+                "matching_items": [
+                    {
+                        "prompt": self.prompts[prompt_id],
+                        "response": self.options[option_id]
+                    }
+                    for prompt_id, option_id in self.correct_answer.items()
+                ],
+                "weight": self._prepare_field_context("weight"),
             },
         )
         frag.add_content(html)
@@ -246,6 +261,11 @@ class TextMatchingXBlock(
         )
         for css_resource in css_resources:
             frag.add_css(self.resource_string(css_resource))
+
+        return frag
+
+    def _prepare_field_context(self, field_name: str):
+        return self._make_field_info(field_name, self.fields[field_name])
 
     def prepare_matching_zone_template_context(self) -> dict:
         prompt_context = list(self.prompts.values())
@@ -397,6 +417,21 @@ class TextMatchingXBlock(
         # TODO: Validate data later, for now we will trust FE
         self.student_choices = data["learner_choice"]
         return {}
+
+    @XBlock.json_handler
+    def get_matching_item_template(self, data, suffix=''):
+        """
+        Endpoint for AJAX to get matching item template
+        """
+        response = {
+            "template": render_template(
+                "matching_item.html",
+                context={},
+            )
+        }
+
+        print(response)
+        return response
 
     def has_submitted_answer(self) -> bool:
         return self._has_submitted_answer

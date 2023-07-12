@@ -22,7 +22,8 @@ def render_template(
     root_dir = os.path.dirname(__file__)
     template_dirs = [
         os.path.join(root_dir, 'templates'),
-        os.path.join(root_dir, 'templates/matching')
+        os.path.join(root_dir, 'templates/matching'),
+        os.path.join(root_dir, 'templates/text_matching_studio')
     ]
 
     # TODO: What if there are multiple template name matched?
@@ -33,4 +34,3 @@ def render_template(
     return html_unescape(
         html.render(Context(context))
     )
-
