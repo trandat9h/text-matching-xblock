@@ -133,7 +133,6 @@ function TextMatchingXBlock(runtime, element, data) {
 
     // Handle learner submit event
     $('.submit', element).click(function (eventObject) {
-        saveChoice()
         $.ajax({
             type: "POST",
             url: submitUrl,
@@ -146,37 +145,4 @@ function TextMatchingXBlock(runtime, element, data) {
         populateAvailableResponses()
         checkSubmitState()
     })
-
-    function matchOption(answerId, optionId) {
-
-        function onUpdateChoiceSuccess(result) {
-
-        }
-
-        $.ajax({
-            type: "POST",
-            url: matchOptionUrl,
-            data: JSON.stringify({
-                "option_id": optionId,
-                "answer_id": answerId
-            }),
-            success: onUpdateChoiceSuccess
-        });
-    }
-
-    function swapOptions(first_option_id, second_option_id) {
-        function onSwapOptionsSuccess() {
-
-        }
-
-        $.ajax({
-            type: "POST",
-            url: swapOptionsUrl,
-            data: JSON.stringify({
-                "first_option_id": first_option_id,
-                "second_option_id": second_option_id,
-            }),
-            success: onSwapOptionsSuccess
-        });
-    }
 }
