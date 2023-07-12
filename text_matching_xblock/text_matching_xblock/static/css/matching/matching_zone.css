@@ -21,6 +21,18 @@
     height: 100px;
 }
 
+.matching-item-wrapper > * {
+    flex: 1;
+}
+
 .prompt-wrapper {
     vertical-align: center;
+}
+
+.btn-reset-response {
+    margin-left: 20px;
+}
+
+.response-options {
+    min-width: 262px;
 }

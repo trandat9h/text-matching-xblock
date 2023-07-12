@@ -1,0 +1,21 @@
+<div class="editor-with-buttons">
+    <div class="wrapper-comp-settings is-active editor-with-buttons" id="settings-tab">
+        <ul class="list-input settings-list">
+            {% include "field.html" with field=display_name %}
+            {% include "field.html" with field=description %}
+            {% include "field.html" with field=weight %}
+            {% include "matching_section.html" with items=matching_items %}
+        </ul>
+    </div>
+    <div class="xblock-actions">
+        <ul>
+            <li class="action-item">
+                <a href="#" class="button action-primary save-button">Save</a>
+            </li>
+
+            <li class="action-item">
+                <a href="#" class="button cancel-button">Cancel</a>
+            </li>
+        </ul>
+    </div>
+</div>

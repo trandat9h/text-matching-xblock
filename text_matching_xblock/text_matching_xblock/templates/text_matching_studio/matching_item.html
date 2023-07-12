@@ -1,0 +1,30 @@
+<li>
+    <div class="matching-item-row">
+        <div class="matching-item-column">
+            <label>
+                <input
+                        type="text"
+                        class="field-data-control"
+                        data-subfield-name="prompt"
+                        value="{% if item %}{{ item.prompt.text }}{% else %}{% endif %}"
+                >
+            </label>
+        </div>
+        <div class="matching-item-column">
+            <label>
+                <input
+                        type="text"
+                        class="field-data-control"
+                        data-subfield-name="response"
+                        value="{% if item %}{{ item.response.text }}{% else %}{% endif %}"
+
+                >
+            </label>
+        </div>
+        <div class="matching-item-subcolumn">
+            <button title="Click to remove this item" class="btn-remove-item">
+                <span class="icon fa fa-trash" aria-hidden="true"></span>
+            </button>
+        </div>
+    </div>
+</li>
