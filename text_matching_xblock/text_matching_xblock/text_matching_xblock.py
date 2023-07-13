@@ -9,7 +9,7 @@ from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds, Float, Boolean
 
-from text_matching_xblock.utils import render_template
+from text_matching_xblock.utils import render_template, generate_random_id
 from xblock.scorable import ScorableXBlockMixin, Score
 from xblockutils.studio_editable import StudioEditableXBlockMixin
 
@@ -224,16 +224,16 @@ class TextMatchingXBlock(
             frag.add_javascript(self.resource_string(js_url))
         frag.initialize_js('TextMatchingStudioXBlock', {
             'settings': {
-                "display_name": self._prepare_field_context("display_name"),
-                "description": self._prepare_field_context("description"),
+                "display_name": self.display_name,
+                "description": self.description,
                 "matching_items": [
                     {
-                        "prompt": self.prompts[prompt_id],
-                        "response": self.options[option_id]
+                        "prompt": self.prompts[prompt_id]["text"],
+                        "response": self.options[option_id]["text"]
                     }
                     for prompt_id, option_id in self.correct_answer.items()
                 ],
-                "weight": self._prepare_field_context("weight"),
+                "weight": self.weight,
             }
         })
 
@@ -261,6 +261,7 @@ class TextMatchingXBlock(
         )
         for css_resource in css_resources:
             frag.add_css(self.resource_string(css_resource))
+        frag.add_css_url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css")
 
         return frag
 
@@ -412,6 +413,45 @@ class TextMatchingXBlock(
             # "progress_message": self.get_progress_message() # TODO: Implement this logic later
         }
 
+    @XBlock.json_handler
+    def studio_submit(self, data, suffix=''):
+        print("Editor has update setting.")
+        print(data)
+        # TODO: Validate data
+        if "display_name" in data:
+            self.display_name = data["display_name"]
+        if "description" in data:
+            self.description = data["description"]
+        if "weight" in data:
+            self.weight = data['weight']
+        if "matching_items" in data:
+            self.update_matching_items(data["matching_items"])
+        return {}
+
+    def update_matching_items(self, items):
+        """
+        Update prompt, response and correct answer
+        """
+        _prompts = {}
+        _responses = {}
+        _answer = {}
+
+        for item in items:
+            prompt_id = generate_random_id()
+            _prompts[prompt_id] = {
+                "text": item["prompt"],
+                "id": prompt_id,
+            }
+
+            response_id = generate_random_id()
+            _responses[response_id] = {
+                "text": item["response"],
+                "id": response_id
+            }
+
+            _answer[prompt_id] = response_id
+
+        self.prompts, self.options, self.correct_answer = (_prompts, _responses, _answer)
     @XBlock.json_handler
     def save_choice(self, data, suffix=''):
         # TODO: Validate data later, for now we will trust FE

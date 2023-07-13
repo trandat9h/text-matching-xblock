@@ -1,4 +1,5 @@
 import os
+import uuid
 from html import unescape as html_unescape
 from typing import Optional, List, Any
 
@@ -34,3 +35,7 @@ def render_template(
     return html_unescape(
         html.render(Context(context))
     )
+
+
+def generate_random_id() -> str:
+    return str(uuid.uuid4())

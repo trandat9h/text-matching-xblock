@@ -60,7 +60,7 @@ function TextMatchingStudioXBlock(runtime, element, data) {
     // Studio submit event handler
     let studioSubmitUrl = runtime.handlerUrl(element, 'studio_submit');
     let getMatchingItemBlankTemplateUrl = runtime.handlerUrl(element, 'get_matching_item_template')
-    $('.studio-submit', element).click(function (eventObject) {
+    $('.save-button', element).click(function (eventObject) {
         $.ajax({
             type: "POST",
             url: studioSubmitUrl,
@@ -79,12 +79,12 @@ function TextMatchingStudioXBlock(runtime, element, data) {
             data: JSON.stringify({}),
             success: function (response) {
                 _template = response.template
-                settings.matching_items.push([
+                settings.matching_items.push(
                     {
                         prompt: '',
                         response: '',
                     }
-                ])
+                )
 
                 // Add new item element and assign remove event listener for this item
 

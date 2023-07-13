@@ -133,6 +133,7 @@ function TextMatchingXBlock(runtime, element, data) {
 
     // Handle learner submit event
     $('.submit', element).click(function (eventObject) {
+        saveChoice()
         $.ajax({
             type: "POST",
             url: submitUrl,
