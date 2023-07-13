@@ -82,21 +82,6 @@ function TextMatchingXBlock(runtime, element, data) {
         checkSubmitState()
     }
 
-    function saveChoice() {
-        function onSaveChoiceSuccess() {
-            // TODO: Implement later
-        }
-
-        $.ajax({
-            type: "POST",
-            url: saveUrl,
-            data: JSON.stringify({
-                'learner_choice': learnerTempChoice
-            }),
-            success: onSaveChoiceSuccess
-        });
-    }
-
     // Get Handler URL from XBlock runtime
     let saveUrl = runtime.handlerUrl(element, 'save_choice')
     let submitUrl = runtime.handlerUrl(element, 'submit');
@@ -133,16 +118,27 @@ function TextMatchingXBlock(runtime, element, data) {
 
     // Handle learner submit event
     $('.submit', element).click(function (eventObject) {
-        saveChoice()
         $.ajax({
             type: "POST",
-            url: submitUrl,
-            data: JSON.stringify({}),
-            success: onSubmitSuccess
+            url: saveUrl,
+            data: JSON.stringify({
+                'learner_choice': learnerTempChoice
+            }),
+            success: function () {
+                $.ajax({
+                    type: "POST",
+                    url: submitUrl,
+                    data: JSON.stringify({}),
+                    success: onSubmitSuccess
+                });
+            }
         });
     });
 
     $(function ($) {
+        // Add this class to parent class of Xblock to achieve CSS from OpenEdx Platform
+        $('.problems-wrapper', element).parent().addClass('xmodule_display xmodule_ProblemBlock')
+
         populateAvailableResponses()
         checkSubmitState()
     })
