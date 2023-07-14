@@ -17,6 +17,9 @@
                 <button type="button" class="submit btn-brand">
                     <span class="submit-label">Gửi</span>
                 </button>
+                <div class="submission-feedback">
+                    You have used {{ attempts_used }} of {{ max_attempts }} attempts.
+                </div>
             </div>
         </div>
         {% include 'submit-notification.html' %}

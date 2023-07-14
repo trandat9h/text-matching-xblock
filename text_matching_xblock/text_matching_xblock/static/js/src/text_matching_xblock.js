@@ -5,6 +5,7 @@ function TextMatchingXBlock(runtime, element, data) {
     let responses = data.responses;
     let learnerChoice = data.learner_choice
     let learnerTempChoice = learnerChoice
+    let maxAttempts = data.max_attempts
 
     // Bind onChange event listener to all select element
     $('.response-wrapper select', element).each(function () {
@@ -87,7 +88,7 @@ function TextMatchingXBlock(runtime, element, data) {
     let submitUrl = runtime.handlerUrl(element, 'submit');
 
     function onSubmitSuccess(response) {
-        let {result, weight_score_earned, weight_score_possible} = response
+        let {result, weight_score_earned, weight_score_possible, attempts_used} = response
 
         let resultNotificationClassSelector, notificationMessage
         if (result === "correct") {
@@ -111,6 +112,9 @@ function TextMatchingXBlock(runtime, element, data) {
 
         // Update notification message
         $(`${resultNotificationClassSelector} > .notification-message`, element).text(notificationMessage)
+
+        // Update submission feedback message
+        $('.submission-feedback', element).text(`You have used ${attempts_used} of ${maxAttempts} atttempts.`)
 
         // TODO: Upgrade Progress later
 

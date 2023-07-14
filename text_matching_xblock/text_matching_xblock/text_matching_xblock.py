@@ -12,6 +12,7 @@ from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds, Float, B
 from text_matching_xblock.utils import render_template, generate_random_id
 from xblock.scorable import ScorableXBlockMixin, Score
 from xblockutils.studio_editable import StudioEditableXBlockMixin
+from xblock.exceptions import JsonHandlerError
 
 
 @dataclasses.dataclass
@@ -134,6 +135,25 @@ class TextMatchingXBlock(
         enforce_type=True,
     )
 
+    max_attempts = Integer(
+        display_name="Maximum attempts",
+        help=
+        "Defines the number of times a student can try to answer this problem. "
+        "If the value is not set, infinite attempts are allowed."
+        ,
+        scope=Scope.settings,
+        default=-1,
+        enforce_type=True,
+    )
+
+    attempts_used = Integer(
+        display_name="Attempts learner has used so far",
+        help="",
+        scope=Scope.user_state,
+        default=0,
+        enforce_type=True,
+    )
+
     def resource_string(self, path):
         """Handy helper for getting resources from our kit."""
         data = pkg_resources.resource_string(__name__, path)
@@ -173,18 +193,18 @@ class TextMatchingXBlock(
         frag = Fragment()
 
         js_urls = [
-            "static/js/lib/semantic-ui.js",
             "static/js/src/text_matching_xblock.js",
         ]
         for js_url in js_urls:
             frag.add_javascript(self.resource_string(js_url))
-        # frag.add_javascript_url("https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.js")
+        frag.add_javascript_url("https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.js")
         frag.initialize_js(
             'TextMatchingXBlock',
             {
                 'xblock_id': self._get_xblock_unique_id(),
                 'responses': self.options,
                 'learner_choice': self.student_choices,
+                'max_attempts': self.max_attempts,
             }
         )
 
@@ -310,6 +330,7 @@ class TextMatchingXBlock(
             "display_name": self.display_name,
             "question": "Some dummy question",
             "id": self._get_xblock_unique_id(),
+            # Problem content and learner attempt
             "matching_items": [
                 {
                     "prompt": self.prompts[prompt_id],
@@ -317,9 +338,9 @@ class TextMatchingXBlock(
                 }
                 for prompt_id, option_id in self.correct_answer.items()
             ],
-            "prompts": prompt_context,
-            "answers": answer_context,
-            "options": option_context,
+            # Attempt result
+            "attempts_used": self.attempts_used,
+            "max_attempts": self.max_attempts,
         }
 
     @XBlock.json_handler
@@ -392,6 +413,12 @@ class TextMatchingXBlock(
 
         # Mark learner has submitted at least once
         self._has_submitted_answer = True
+        if not self.max_attempts == -1 and self.attempts_used == self.max_attempts:
+            raise JsonHandlerError(
+                400,
+                "You have run out of possible attempts",
+            )
+        self.attempts_used = self.attempts_used + 1
 
         # Evaluate submission and save score
         self.set_score(self.calculate_score())
@@ -411,6 +438,7 @@ class TextMatchingXBlock(
             "weight_score_earned": score.raw_earned * self.weight,
             "weight_score_possible": score.raw_possible * self.weight,
             # "progress_message": self.get_progress_message() # TODO: Implement this logic later
+            "attempts_used": self.attempts_used,
         }
 
     @XBlock.json_handler
