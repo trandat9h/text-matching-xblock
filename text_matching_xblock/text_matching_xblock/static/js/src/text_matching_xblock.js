@@ -6,6 +6,10 @@ function TextMatchingXBlock(runtime, element, data) {
     let learnerChoice = data.learner_choice
     let learnerTempChoice = learnerChoice
     let maxAttempts = data.max_attempts
+    let isGraded = data.is_graded
+    let hasSubmittedAnswer = data.has_submitted_answer
+    let weightScoreEarned = data.weight_score_earned
+    let weightScorePossible = data.weight_score_possible
 
     // Bind onChange event listener to all select element
     $('.response-wrapper select', element).each(function () {
@@ -83,6 +87,18 @@ function TextMatchingXBlock(runtime, element, data) {
         checkSubmitState()
     }
 
+    function getProgressMessage(_isGraded, _hasSubmittedAnswer, earned, possible) {
+        let _progressMsg, _isGradedMsg
+        if (_hasSubmittedAnswer === false)
+            _progressMsg = `${possible} points possible`
+        else
+            _progressMsg = `${earned}/${possible} point`
+
+        _isGradedMsg = _isGraded ? "(graded)" : "(ungraded)"
+
+        return `${_progressMsg} ${_isGradedMsg}`
+    }
+
     // Get Handler URL from XBlock runtime
     let saveUrl = runtime.handlerUrl(element, 'save_choice')
     let submitUrl = runtime.handlerUrl(element, 'submit');
@@ -117,6 +133,15 @@ function TextMatchingXBlock(runtime, element, data) {
         if (maxAttempts !== -1)
             $('.submission-feedback', element).text(`You have used ${attempts_used} of ${maxAttempts} attempts.`)
 
+        // Update progress message
+        $('.problem-progress', element).text(
+            getProgressMessage(
+                isGraded,
+                true,
+                weight_score_earned,
+                weight_score_possible,
+            ))
+
     }
 
     // Handle learner submit event
@@ -142,6 +167,14 @@ function TextMatchingXBlock(runtime, element, data) {
         // Add this class to parent class of Xblock to achieve CSS from OpenEdx Platform
         $('.problems-wrapper', element).parent().addClass('xmodule_display xmodule_ProblemBlock')
 
+        // Update progress message
+        $('.problem-progress', element).text(
+            getProgressMessage(
+                isGraded,
+                hasSubmittedAnswer,
+                weightScoreEarned,
+                weightScorePossible,
+            ))
         populateAvailableResponses()
         checkSubmitState()
     })

@@ -137,10 +137,8 @@ class TextMatchingXBlock(
 
     max_attempts = Integer(
         display_name="Maximum attempts",
-        help=
-        "Defines the number of times a student can try to answer this problem. "
-        "If the value is not set, infinite attempts are allowed."
-        ,
+        help="Defines the number of times a student can try to answer this problem. "
+             "If the value is -1, infinite attempts are allowed.",
         scope=Scope.settings,
         default=-1,
         enforce_type=True,
@@ -198,6 +196,7 @@ class TextMatchingXBlock(
         for js_url in js_urls:
             frag.add_javascript(self.resource_string(js_url))
         frag.add_javascript_url("https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.js")
+        score = self.get_score()
         frag.initialize_js(
             'TextMatchingXBlock',
             {
@@ -205,6 +204,10 @@ class TextMatchingXBlock(
                 'responses': self.options,
                 'learner_choice': self.student_choices,
                 'max_attempts': self.max_attempts,
+                'is_graded': self.is_graded(),
+                "has_submitted_answer": self.has_submitted_answer(),
+                "weight_score_earned": score.raw_earned * self.weight,
+                "weight_score_possible": score.raw_possible * self.weight,
             }
         )
 
@@ -437,7 +440,6 @@ class TextMatchingXBlock(
             "result": result,
             "weight_score_earned": score.raw_earned * self.weight,
             "weight_score_possible": score.raw_possible * self.weight,
-            # "progress_message": self.get_progress_message() # TODO: Implement this logic later
             "attempts_used": self.attempts_used,
         }
 
@@ -480,6 +482,7 @@ class TextMatchingXBlock(
             _answer[prompt_id] = response_id
 
         self.prompts, self.options, self.correct_answer = (_prompts, _responses, _answer)
+
     @XBlock.json_handler
     def save_choice(self, data, suffix=''):
         # TODO: Validate data later, for now we will trust FE
@@ -507,7 +510,7 @@ class TextMatchingXBlock(
     def max_score(self):
         return 1
 
-    def get_score(self):
+    def get_score(self) -> Score:
         """
         Return the problem's current score as raw values.
         """
@@ -534,6 +537,9 @@ class TextMatchingXBlock(
             raw_earned=raw_score,
             raw_possible=self.max_score(),
         )
+
+    def is_graded(self) -> bool:
+        return getattr(self, "graded", False)
 
     @staticmethod
     def workbench_scenarios():
