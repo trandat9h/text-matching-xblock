@@ -114,9 +114,8 @@ function TextMatchingXBlock(runtime, element, data) {
         $(`${resultNotificationClassSelector} > .notification-message`, element).text(notificationMessage)
 
         // Update submission feedback message
-        $('.submission-feedback', element).text(`You have used ${attempts_used} of ${maxAttempts} atttempts.`)
-
-        // TODO: Upgrade Progress later
+        if (maxAttempts !== -1)
+            $('.submission-feedback', element).text(`You have used ${attempts_used} of ${maxAttempts} attempts.`)
 
     }
 

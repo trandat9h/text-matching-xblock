@@ -3,7 +3,6 @@
         {{ display_name }}
     </h3>
     <div class="problem-progress">
-        1 point possible (ungraded)
     </div>
     <div class="problem">
         <div>
@@ -18,7 +17,9 @@
                     <span class="submit-label">Gửi</span>
                 </button>
                 <div class="submission-feedback">
-                    You have used {{ attempts_used }} of {{ max_attempts }} attempts.
+                    {% if max_attempts != -1 %}
+                        You have used {{ attempts_used }} of {{ max_attempts }} attempts.
+                    {% endif %}
                 </div>
             </div>
         </div>
