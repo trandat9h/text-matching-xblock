@@ -54,10 +54,10 @@ class TextMatchingXBlock(
     )
 
     description = String(
-        display_name="Question",
+        display_name="Description",
         help="The description of the problem",
         scope=Scope.settings,
-        default="",
+        default="The description of the problem",
         enforce_type=True,
     )
 
@@ -321,7 +321,7 @@ class TextMatchingXBlock(
         return {
             # Block content
             "display_name": self.display_name,
-            "question": "Some dummy question",
+            "description": self.description,
             "id": self._get_xblock_unique_id(),
             # Problem content and learner attempt
             "matching_items": [
