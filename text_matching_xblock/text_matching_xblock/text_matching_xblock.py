@@ -1,13 +1,10 @@
 """TO-DO: Write a description of what this XBlock is."""
 import dataclasses
-import uuid
-from collections import defaultdict
-from copy import copy
 
 import pkg_resources
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
-from xblock.fields import Integer, Scope, String, Dict, List, ScopeIds, Float, Boolean
+from xblock.fields import Integer, Scope, String, Dict, Float, Boolean
 
 from text_matching_xblock.utils import render_template, generate_random_id
 from xblock.scorable import ScorableXBlockMixin, Score
@@ -79,18 +76,18 @@ class TextMatchingXBlock(
         scope=Scope.content,
     )
 
-    options = Dict(
+    responses = Dict(
         default={
             "1": {
-                "text": "OptionffffOptionffffOptionffffOptionffff",
+                "text": "Response 1",
                 "id": "1",
             },
             "2": {
-                "text": "Option 2",
+                "text": "Response 2",
                 "id": "2",
             },
             "3": {
-                "text": "Option 3",
+                "text": "Response 3",
                 "id": "3",
             },
         },
@@ -110,7 +107,7 @@ class TextMatchingXBlock(
     student_choices = Dict(
         default={},
         scope=Scope.user_state,
-        help="A mapping from prompt_id to option_id that has been matched so far."
+        help="A mapping from prompt_id to response_id that has been matched so far."
     )
 
     _has_submitted_answer = Boolean(
@@ -140,7 +137,7 @@ class TextMatchingXBlock(
         help="Defines the number of times a student can try to answer this problem. "
              "If the value is -1, infinite attempts are allowed.",
         scope=Scope.settings,
-        default=-1,
+        default=3,
         enforce_type=True,
     )
 
@@ -201,7 +198,7 @@ class TextMatchingXBlock(
             'TextMatchingXBlock',
             {
                 'xblock_id': self._get_xblock_unique_id(),
-                'responses': self.options,
+                'responses': self.responses,
                 'learner_choice': self.student_choices,
                 'max_attempts': self.max_attempts,
                 'is_graded': self.is_graded(),
@@ -243,9 +240,9 @@ class TextMatchingXBlock(
                 "matching_items": [
                     {
                         "prompt": self.prompts[prompt_id]["text"],
-                        "response": self.options[option_id]["text"]
+                        "response": self.responses[response_id]["text"]
                     }
-                    for prompt_id, option_id in self.correct_answer.items()
+                    for prompt_id, response_id in self.correct_answer.items()
                 ],
                 "weight": self.weight,
             }
@@ -259,9 +256,9 @@ class TextMatchingXBlock(
                 "matching_items": [
                     {
                         "prompt": self.prompts[prompt_id],
-                        "response": self.options[option_id]
+                        "response": self.responses[response_id]
                     }
-                    for prompt_id, option_id in self.correct_answer.items()
+                    for prompt_id, response_id in self.correct_answer.items()
                 ],
                 "weight": self._prepare_field_context("weight"),
             },
@@ -283,41 +280,6 @@ class TextMatchingXBlock(
         return self._make_field_info(field_name, self.fields[field_name])
 
     def prepare_matching_zone_template_context(self) -> dict:
-        prompt_context = list(self.prompts.values())
-
-        # Prepare answer context
-        answer_context = []
-        for prompt_id, prompt in self.prompts.items():
-            if option_id := self.student_choices.get(prompt_id):
-                answer_context.append({
-                    "status": "dropzone-occupied",
-                    "id": prompt_id,
-                    "text": self.options[option_id]["text"],
-                })
-            else:
-                answer_context.append({
-                    "status": "blank",
-                    "id": prompt_id,
-                })
-
-        # Prepare option context
-        chosen_option_ids = list(self.student_choices.values())
-        option_context = [
-            {
-                "status": "hollow",
-                "text": option["text"],
-                "id": option["id"],
-            }
-            if option["id"] in chosen_option_ids
-            else
-            {
-                "status": "origin-occupied",
-                "text": option["text"],
-                "id": option["id"],
-            }
-            for option in self.options.values()
-        ]
-
         return {
             # Block content
             "display_name": self.display_name,
@@ -327,9 +289,9 @@ class TextMatchingXBlock(
             "matching_items": [
                 {
                     "prompt": self.prompts[prompt_id],
-                    "response": self.options[option_id],
+                    "response": self.responses[response_id],
                 }
-                for prompt_id, option_id in self.correct_answer.items()
+                for prompt_id, response_id in self.correct_answer.items()
             ],
             # Attempt result
             "attempts_used": self.attempts_used,
@@ -411,7 +373,7 @@ class TextMatchingXBlock(
 
             _answer[prompt_id] = response_id
 
-        self.prompts, self.options, self.correct_answer = (_prompts, _responses, _answer)
+        self.prompts, self.responses, self.correct_answer = (_prompts, _responses, _answer)
 
     @XBlock.json_handler
     def save_choice(self, data, suffix=''):
@@ -455,8 +417,8 @@ class TextMatchingXBlock(
     def calculate_score(self):
         correct_count = 0
         total_count = len(list(self.prompts.keys()))
-        for prompt_id, option_id in self.student_choices.items():
-            if option_id == self.correct_answer[prompt_id]:
+        for prompt_id, response_id in self.student_choices.items():
+            if response_id == self.correct_answer[prompt_id]:
                 correct_count += 1
 
         # For now if all prompts are not matched correctly, learner score will be 0
