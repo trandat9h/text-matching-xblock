@@ -226,15 +226,6 @@ class TextMatchingXBlock(
             frag.add_css(self.resource_string(css_resource))
         frag.add_css_url("//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.css")
 
-        # Do not understand why 'add_javascript_url' default put script in body
-        # instead of head, but to solve this issue, explicitly call 'add_resource_url'
-        # to specify where to put this resource script.
-        # frag.add_resource_url(
-        #     url="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js",
-        #     mimetype='application/javascript',
-        #     placement='head',
-        # )
-
         return frag
 
     def studio_view(self, context=None):
@@ -327,7 +318,6 @@ class TextMatchingXBlock(
             for option in self.options.values()
         ]
 
-        print(answer_context)
         return {
             # Block content
             "display_name": self.display_name,
@@ -345,66 +335,6 @@ class TextMatchingXBlock(
             "attempts_used": self.attempts_used,
             "max_attempts": self.max_attempts,
         }
-
-    @XBlock.json_handler
-    def match_option(self, data, suffix=''):
-        """
-        Match/unmatch an option to an answer
-        """
-        print("match option")
-        print(data)
-        # TODO: Validate request here
-        option_id = data["option_id"]
-        answer_id = data["answer_id"]
-        if not option_id:
-            # Student remove an option
-
-            # Remove option from student choice
-            if not self.student_choices.get(answer_id):
-                raise Exception()
-
-            del self.student_choices[answer_id]
-        else:
-            # Student match an option to an answer
-            if self.student_choices.get(answer_id):
-                # Can not match an option to occupied answer
-                raise Exception()
-
-            self.student_choices[answer_id] = option_id
-
-        return {"result": "success"}
-
-    @XBlock.json_handler
-    def swap_options(self, data, suffix=''):
-        """
-        Swap 2 options. This method also includes re-match the option to another blank answer
-        """
-        print("Swap option")
-        print(data)
-        # TODO: Validate request here
-        student_choice = self.student_choices
-        first_option_id = data["first_option_id"]
-        second_option_id = data["second_option_id"]
-
-        if not student_choice.get(first_option_id) and not student_choice.get(second_option_id):
-            raise Exception()
-
-        # If one of 2 options is chosen, remove the chosen one and assign that value to the remaining
-        if answer := student_choice.get(first_option_id):
-            student_choice[second_option_id] = answer
-            del student_choice[first_option_id]
-
-        elif answer := student_choice.get(second_option_id):
-            student_choice[first_option_id] = answer
-            del student_choice[second_option_id]
-
-        # If 2 options are chosen, swap those
-        else:
-            # Swap 2 options
-            student_choice[first_option_id], student_choice[second_option_id] = student_choice[second_option_id], \
-                student_choice[first_option_id]
-
-        return {"result": "success"}
 
     @XBlock.json_handler
     def submit(self, data, suffix=''):
