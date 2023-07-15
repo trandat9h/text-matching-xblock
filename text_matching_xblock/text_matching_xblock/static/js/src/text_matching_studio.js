@@ -53,21 +53,31 @@ function TextMatchingStudioXBlock(runtime, element, data) {
         $(this).click(removeMatchingItem)
     })
 
-    function onSubmitSuccess(response) {
-        // TODO: Update savedSetting and disable submit button
-    }
-
     // Studio submit event handler
     let studioSubmitUrl = runtime.handlerUrl(element, 'studio_submit');
     let getMatchingItemBlankTemplateUrl = runtime.handlerUrl(element, 'get_matching_item_template')
     $('.save-button', element).click(function (eventObject) {
+        if (runtime.notify) {
+            runtime.notify('save', {state: 'start', message: "Saving"});
+        }
         $.ajax({
             type: "POST",
             url: studioSubmitUrl,
             data: JSON.stringify(settings),
-            success: onSubmitSuccess
+            success: function () {
+                if (runtime.notify) {
+                    runtime.notify('save', {state: 'end'});
+                }
+            }
         });
     });
+
+    $('.cancel-button', element).click(function (eventObject) {
+        console.debug("User has canceled setting.")
+        if (runtime.notify) {
+            runtime.notify('cancel', {});
+        }
+    })
 
     // Handle add new item event
     $('.btn-add-matching-item', element).click(function (eventObject) {
