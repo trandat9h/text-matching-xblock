@@ -4,8 +4,9 @@ function TextMatchingXBlock(runtime, element, data) {
     let xblockId = data.xblock_id;
     let responses = data.responses;
     let learnerChoice = data.learner_choice
-    let learnerTempChoice = learnerChoice
+    let learnerTempChoice = JSON.parse(JSON.stringify(learnerChoice))
     let maxAttempts = data.max_attempts
+    let attemptsUsed = data.attempts_used
     let isGraded = data.is_graded
     let hasSubmittedAnswer = data.has_submitted_answer
     let weightScoreEarned = data.weight_score_earned
@@ -32,11 +33,58 @@ function TextMatchingXBlock(runtime, element, data) {
 
 
     function checkSubmitState() {
-        // Enable SUBMIT button when all prompts have responses for the first time
-        // or some responses have changed since last submission.
-        if (Object.keys(learnerTempChoice).length === Object.keys(responses).length)
-            $('.submit', element).prop('disabled', false)
-        else $('.submit', element).prop('disabled', true)
+        // MUST-HAVE conditions for SUBMIT button to be enabled:
+        // - Current attempt must have all prompts fulfilled
+        // - Learner must have available retry (if max_retry is limited)
+
+
+        // Only enable SUBMIT button in the following scenarios:
+        // - Scenario 1
+        //   + Learner has submitted once
+        //   + New attempt if fulfilled AND different from the latest submission
+        // - Scenario 2
+        //   + Learner has NOT submitted anytime
+        //   + New attempt is fulfilled
+
+
+        let isEnabled = false
+        const isAttemptFulfilled = (Object.keys(learnerTempChoice).length === Object.keys(responses).length)
+        const canRetry = (maxAttempts === -1 || (attemptsUsed < maxAttempts))
+
+        if (isAttemptFulfilled === true && canRetry === true) {
+            if (hasSubmittedAnswer === true) {
+                if (!isObjectsEqual(learnerTempChoice, learnerChoice))
+                    isEnabled = true
+            } else {
+                isEnabled = true
+            }
+        }
+
+        $('.submit', element).prop('disabled', !isEnabled)
+
+        console.debug("Start check submit state!")
+        console.debug(learnerTempChoice)
+        console.debug(learnerChoice)
+
+        console.debug(`is Equal: ${isEnabled}`)
+    }
+
+    function isObjectsEqual(obj1, obj2) {
+        let isObjEqual = false;
+        const obj1Keys = Object.keys(obj1).sort();
+        const obj2Keys = Object.keys(obj2).sort();
+        if (obj1Keys.length === obj2Keys.length) {
+            const areEqual = obj1Keys.every((key, index) => {
+                const objValue1 = obj1[key];
+                const objValue2 = obj2[obj2Keys[index]];
+                return objValue1 === objValue2;
+            });
+            if (areEqual) {
+                isObjEqual = true;
+            }
+        }
+
+        return isObjEqual
     }
 
     function populateAvailableResponses() {
@@ -104,7 +152,8 @@ function TextMatchingXBlock(runtime, element, data) {
     let submitUrl = runtime.handlerUrl(element, 'submit');
 
     function onSubmitSuccess(response) {
-        let {result, weight_score_earned, weight_score_possible, attempts_used} = response
+        attemptsUsed++;
+        let {result, weight_score_earned, weight_score_possible} = response
 
         let resultNotificationClassSelector, notificationMessage
         if (result === "correct") {
@@ -131,7 +180,7 @@ function TextMatchingXBlock(runtime, element, data) {
 
         // Update submission feedback message
         if (maxAttempts !== -1)
-            $('.submission-feedback', element).text(`You have used ${attempts_used} of ${maxAttempts} attempts.`)
+            $('.submission-feedback', element).text(`You have used ${attemptsUsed} of ${maxAttempts} attempts.`)
 
         // Update progress message
         $('.problem-progress', element).text(
@@ -142,10 +191,20 @@ function TextMatchingXBlock(runtime, element, data) {
                 weight_score_possible,
             ))
 
+        // Revert Submitting text message to Submit for next submission (if any)
+        $('button.submit', element).find('span.submit-label').text('Submit')
+
+        // Update temp choice and recheck Submit button status (in this case Submit button should always be disabled
+        hasSubmittedAnswer = true
+        learnerChoice = JSON.parse(JSON.stringify(learnerTempChoice))
+        checkSubmitState()
+
     }
 
     // Handle learner submit event
-    $('.submit', element).click(function (eventObject) {
+    $('button.submit', element).click(function (eventObject) {
+        $(this).find('span.submit-label').text('Submitting')
+        $(this).prop('disabled', true)
         $.ajax({
             type: "POST",
             url: saveUrl,
@@ -175,7 +234,8 @@ function TextMatchingXBlock(runtime, element, data) {
                 weightScoreEarned,
                 weightScorePossible,
             ))
-        populateAvailableResponses()
+
         checkSubmitState()
+        populateAvailableResponses()
     })
 }

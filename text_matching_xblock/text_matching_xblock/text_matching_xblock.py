@@ -44,7 +44,7 @@ class TextMatchingXBlock(
     """
     display_name = String(
         display_name="Title",
-        help="The title of the drag and drop problem. The title is displayed to learners.",
+        help="The title of the problem. The title is displayed to learners.",
         scope=Scope.settings,
         default="Text Matching Xblock",
         enforce_type=True,
@@ -200,6 +200,7 @@ class TextMatchingXBlock(
                 'xblock_id': self._get_xblock_unique_id(),
                 'responses': self.responses,
                 'learner_choice': self.student_choices,
+                'attempts_used': self.attempts_used,
                 'max_attempts': self.max_attempts,
                 'is_graded': self.is_graded(),
                 "has_submitted_answer": self.has_submitted_answer(),
