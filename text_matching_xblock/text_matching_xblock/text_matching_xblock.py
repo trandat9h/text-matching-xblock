@@ -175,8 +175,7 @@ class TextMatchingXBlock(
         # _id = _id.replace(":", "")
         # _id = _id.replace(".", "")
 
-        # TODO: Replace this mock id with real random id
-        _id = "randomidaiudbquwbc"
+        _id = f'textmatching-xblock-{generate_random_id()}'
 
         return _id
 
