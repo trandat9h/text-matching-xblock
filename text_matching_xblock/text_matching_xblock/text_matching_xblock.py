@@ -1,11 +1,13 @@
 """TO-DO: Write a description of what this XBlock is."""
-import dataclasses
+import random
+from typing import Optional
 
 import pkg_resources
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, Scope, String, Dict, Float, Boolean
 
+from text_matching_xblock.enums import EvaluationMode
 from text_matching_xblock.utils import render_template, generate_random_id
 from xblock.scorable import ScorableXBlockMixin, Score
 from xblockutils.studio_editable import StudioEditableXBlockMixin
@@ -42,6 +44,8 @@ class TextMatchingXBlock(
     """
     TO-DO: document what your XBlock does.
     """
+    has_score = True
+
     display_name = String(
         display_name="Title",
         help="The title of the problem. The title is displayed to learners.",
@@ -104,6 +108,31 @@ class TextMatchingXBlock(
         help="Correct answer for score evaluation"
     )
 
+    evaluation_mode = String(
+        display_name="Mode",
+        help=(
+            "Standard mode: the problem provides immediate feedback each time "
+            "a learner drops an item on a target zone. "
+            "Assessment mode: the problem provides feedback only after "
+            "a learner drops all available items on target zones."
+        ),
+        scope=Scope.settings,
+        values=[
+            {"display_name": "Standard", "value": EvaluationMode.STANDARD},
+            {"display_name": "Assessment", "value": EvaluationMode.ASSESSMENT},
+        ],
+        default=EvaluationMode.STANDARD,
+        enforce_type=True,
+    )
+
+    _is_evaluation_mode_manually_edited = Boolean(
+        display_name="Mode is manually edited",
+        help="Whether editor has manually edit evaluation mode. If False the mode come from default section setting",
+        scope=Scope.settings,
+        default=False,
+        enforce_type=True,
+    )
+
     student_choices = Dict(
         default={},
         scope=Scope.user_state,
@@ -154,6 +183,7 @@ class TextMatchingXBlock(
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
 
+    @staticmethod
     def _get_xblock_unique_id(self) -> str:
         """
         Return unique ID of this block. Useful for HTML ID attributes.
@@ -245,9 +275,17 @@ class TextMatchingXBlock(
                     for prompt_id, response_id in self.correct_answer.items()
                 ],
                 "weight": self.weight,
+                "evaluation_mode": {
+                    "value": self.evaluation_mode,
+                    "is_edited": self._is_evaluation_mode_manually_edited,
+                }
             }
         })
 
+        self.update_evaluation_mode(
+            is_edited=self._is_evaluation_mode_manually_edited,
+            eval_mode=self.evaluation_mode,
+        )
         html = render_template(
             template_name="text_matching_studio.html",
             context={
@@ -261,6 +299,7 @@ class TextMatchingXBlock(
                     for prompt_id, response_id in self.correct_answer.items()
                 ],
                 "weight": self._prepare_field_context("weight"),
+                "evaluation_mode": self._prepare_field_context("evaluation_mode"),
             },
         )
         frag.add_content(html)
@@ -348,6 +387,11 @@ class TextMatchingXBlock(
             self.weight = data['weight']
         if "matching_items" in data:
             self.update_matching_items(data["matching_items"])
+        if "evaluation_mode" in data:
+            self.update_evaluation_mode(
+                eval_mode=data["evaluation_mode"]["value"],
+                is_edited=data["evaluation_mode"]["is_edited"],
+            )
         return {}
 
     def update_matching_items(self, items):
@@ -375,6 +419,27 @@ class TextMatchingXBlock(
 
         self.prompts, self.responses, self.correct_answer = (_prompts, _responses, _answer)
 
+    def update_evaluation_mode(
+        self,
+        is_edited: bool,
+        eval_mode: Optional[str] = None,
+    ):
+        print(is_edited)
+        print(eval_mode)
+        self._is_evaluation_mode_manually_edited = is_edited
+
+        if is_edited:
+            # TODO: Validate evaluate_mode here
+            self.evaluation_mode = eval_mode
+            return
+
+        # If Course editor does not modify this setting, get the value from 'graded' attribute
+        if self.is_graded():
+            self.evaluation_mode = EvaluationMode.ASSESSMENT
+            return
+
+        self.evaluation_mode = EvaluationMode.STANDARD
+
     @XBlock.json_handler
     def save_choice(self, data, suffix=''):
         # TODO: Validate data later, for now we will trust FE
@@ -400,7 +465,7 @@ class TextMatchingXBlock(
         return self._has_submitted_answer
 
     def max_score(self):
-        return 1
+        return 1.0
 
     def get_score(self) -> Score:
         """

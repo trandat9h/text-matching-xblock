@@ -10,9 +10,14 @@ function TextMatchingStudioXBlock(runtime, element, data) {
             const fieldName = $wrapper.data('field-name')
 
             const fieldValue = $(this).val()
-            if (fieldType === "string")
-                settings[fieldName] = fieldValue
-            else if (fieldType === "integer")
+            if (fieldType === "string") {
+                // Special handler for evaluation mode since its DS is different
+                if (fieldName === "evaluation_mode") {
+                    settings[fieldName]["value"] = fieldValue
+                    settings[fieldName]["is_edited"] = true
+                } else
+                    settings[fieldName] = fieldValue
+            } else if (fieldType === "integer")
                 settings[fieldName] = parseInt(fieldValue)
             else if (fieldType === "custom") {
                 // Do nothing, this type will have its own handler
@@ -21,8 +26,6 @@ function TextMatchingStudioXBlock(runtime, element, data) {
             }
 
             console.debug(`Setting: ${fieldName} has new value: ${fieldValue}`)
-
-            // TODO: Implement check any field has changed to enable/disable submit button
         })
     })
 
