@@ -99,7 +99,7 @@ function TextMatchingXBlock(runtime, element, data) {
             }
 
         // Populate these available responses to all dropdown options
-        $('.response-wrapper select', element).each(function () {
+        $('.response-wrapper select.response-options', element).each(function () {
             const promptId = $(this).data('prompt-id')
             if (promptId in learnerTempChoice) {
                 $(this).find("option").remove()
@@ -121,6 +121,8 @@ function TextMatchingXBlock(runtime, element, data) {
                     `<option value="${response.id}">${response.text}</option>`
                 );
         })
+
+        hideAnswer()
     }
 
     function updateChoice(promptId, responseId) {
@@ -150,6 +152,7 @@ function TextMatchingXBlock(runtime, element, data) {
     // Get Handler URL from XBlock runtime
     let saveUrl = runtime.handlerUrl(element, 'save_choice')
     let submitUrl = runtime.handlerUrl(element, 'submit');
+    let showAnswerUrl = runtime.handlerUrl(element, 'show_answer')
 
     function onSubmitSuccess(response) {
         attemptsUsed++;
@@ -221,6 +224,61 @@ function TextMatchingXBlock(runtime, element, data) {
             }
         });
     });
+
+    function showAnswer(answer) {
+        showAttemptCorrectness(answer)
+        showCorrectAnswer(answer)
+    }
+
+    function showAttemptCorrectness(answer) {
+        // Show learner attempt result by coloring green/red for correct/incorrect response
+        $('.MatchingZone .matching-item-wrapper', element).each(function () {
+            let isCorrect = false
+            let promptId = $(this).data('prompt-id')
+            let $response = $(this).find('.response-options')
+            let responseId = $response.val()
+            if (responseId === null)
+                return
+
+            if (answer[promptId] === responseId)
+                isCorrect = true
+
+            let resultCSSSelector = isCorrect === true ? "choice_correct" : "choice_incorrect"
+            $response.addClass(resultCSSSelector)
+        })
+    }
+
+    function showCorrectAnswer(answer) {
+        // Show the correct response for each prompt
+        $('.MatchingZone .matching-item-wrapper', element).each(function () {
+            const promptId = $(this).data('prompt-id')
+            const $answer = $(this).find('.answer-wrapper')
+            $answer.append(`<p>${responses[answer[promptId]].text}</p>`)
+        })
+    }
+
+
+    function hideAnswer() {
+        $('.MatchingZone .matching-item-wrapper', element).each(function () {
+            let promptId = $(this).data('prompt-id')
+            let $response = $(this).find('.response-options')
+            // Remove answer color (if learner has shown answer before)
+            $response.removeClass('choice_correct choice_incorrect')
+
+            $(this).find('.answer-wrapper').empty()
+        })
+    }
+
+    $('.btn-show-answer', element).click(function () {
+        $.ajax({
+            type: "POST",
+            url: showAnswerUrl,
+            data: JSON.stringify({}),
+            success: function (response) {
+                showAnswer(response["answer"])
+            },
+        });
+    })
 
     $(function ($) {
         // Add this class to parent class of Xblock to achieve CSS from OpenEdx Platform

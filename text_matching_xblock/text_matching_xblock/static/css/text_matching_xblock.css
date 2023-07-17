@@ -7,3 +7,15 @@
 .text_matching_xblock_block p {
     cursor: pointer;
 }
+
+.answer-wrapper {
+    padding: 0 10px;
+}
+
+.choice_incorrect {
+    border: 2px solid #b20610 !important;
+}
+
+.choice_correct {
+    border: 2px solid #008100 !important;
+}

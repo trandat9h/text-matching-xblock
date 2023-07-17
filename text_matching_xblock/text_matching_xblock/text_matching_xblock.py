@@ -184,7 +184,7 @@ class TextMatchingXBlock(
         return data.decode("utf8")
 
     @staticmethod
-    def _get_xblock_unique_id(self) -> str:
+    def _get_xblock_unique_id() -> str:
         """
         Return unique ID of this block. Useful for HTML ID attributes.
         Works both in LMS/Studio and workbench runtimes:
@@ -497,6 +497,18 @@ class TextMatchingXBlock(
 
     def is_graded(self) -> bool:
         return getattr(self, "graded", False)
+
+    @XBlock.json_handler
+    def show_answer(self, data, suffix=''):
+        if not self.evaluation_mode == EvaluationMode.STANDARD:
+            raise JsonHandlerError(
+                403,
+                "Can only receive answer in STANDARD mode"
+            )
+
+        return {
+            "answer": self.correct_answer
+        }
 
     @staticmethod
     def workbench_scenarios():
