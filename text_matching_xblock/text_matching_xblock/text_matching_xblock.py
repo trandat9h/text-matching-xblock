@@ -60,6 +60,7 @@ class TextMatchingXBlock(
         scope=Scope.settings,
         default="The description of the problem",
         enforce_type=True,
+        multiline_editor=True
     )
 
     prompts = Dict(
