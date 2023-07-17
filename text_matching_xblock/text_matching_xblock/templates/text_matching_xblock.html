@@ -13,11 +13,13 @@
         </div>
         <div class="action">
             <div class="problem-action-buttons-wrapper">
-                <span class="problem-action-button-wrapper">
-                    <button type="button" class="show problem-action-btn btn-link btn-small btn-show-answer">
-                        <span class="show-label">Show answer</span>
-                    </button>
-                </span>
+                {% if can_show_answer %}
+                    <span class="problem-action-button-wrapper">
+                        <button type="button" class="show problem-action-btn btn-link btn-small btn-show-answer">
+                            <span class="show-label">Show answer</span>
+                        </button>
+                    </span>
+                {% endif %}
             </div>
             <div class="submit-attempt-container">
                 <button type="button" class="submit btn-brand">

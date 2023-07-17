@@ -178,6 +178,14 @@ class TextMatchingXBlock(
         enforce_type=True,
     )
 
+    can_show_answer = Boolean(
+        display_name="Can Show Answer",
+        help="Whether Learner can see the correct answer or not",
+        scope=Scope.settings,
+        default=False,
+        enforce_type=True,
+    )
+
     def resource_string(self, path):
         """Handy helper for getting resources from our kit."""
         data = pkg_resources.resource_string(__name__, path)
@@ -332,6 +340,7 @@ class TextMatchingXBlock(
                 }
                 for prompt_id, response_id in self.correct_answer.items()
             ],
+            "can_show_answer": self.can_show_answer,
             # Attempt result
             "attempts_used": self.attempts_used,
             "max_attempts": self.max_attempts,
@@ -504,6 +513,12 @@ class TextMatchingXBlock(
             raise JsonHandlerError(
                 403,
                 "Can only receive answer in STANDARD mode"
+            )
+
+        if not self.can_show_answer:
+            raise JsonHandlerError(
+                403,
+                "The problem is not allowed to show answer"
             )
 
         return {
