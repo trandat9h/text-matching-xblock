@@ -17,3 +17,11 @@ class EvaluationMode(BaseEnum):
 
 class SettingKey(BaseEnum):
     pass
+
+
+class ShowAnswerOption(BaseEnum):
+    ALWAYS = 'always'
+    NEVER = 'never'
+    PAST_DUE = 'past_due'
+    AFTER_SOME_ATTEMPTS = 'after_some_attempts'
+    AFTER_ATTEMPTED = 'after_attempted'

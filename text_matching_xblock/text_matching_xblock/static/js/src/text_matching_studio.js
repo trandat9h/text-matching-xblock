@@ -17,6 +17,8 @@ function TextMatchingStudioXBlock(runtime, element, data) {
                     settings[fieldName]["is_edited"] = true
                 } else
                     settings[fieldName] = fieldValue
+            } else if (fieldType === "text") {
+                settings[fieldName] = fieldValue
             } else if (fieldType === "integer")
                 settings[fieldName] = parseInt(fieldValue)
             else if (fieldType === "custom") {

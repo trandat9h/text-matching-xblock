@@ -151,7 +151,7 @@ class TextMatchingXBlock(
         display_name="Problem Weight",
         help="Defines the number of points the problem is worth.",
         scope=Scope.settings,
-        default=1,
+        default=1.0,
         enforce_type=True,
     )
 
@@ -172,18 +172,38 @@ class TextMatchingXBlock(
     )
 
     attempts_used = Integer(
-        display_name="Attempts learner has used so far",
-        help="",
+        display_name="Attempt used",
+        help="Attempts learner has used so far",
         scope=Scope.user_state,
         default=0,
         enforce_type=True,
     )
 
-    can_show_answer = Boolean(
-        display_name="Can Show Answer",
+    show_reset_button = Boolean(
+        display_name="Show Reset Button",
+        help="Show Reset Button to allow learner to reset their choice",
+        scope=Scope.settings,
+        default=True,
+        enforce_type=True,
+    )
+
+    show_save_button = Boolean(
+        display_name="Show Save Button",
+        help="Show Save Button to allow learner to save their choice so that they can come back later.",
+        scope=Scope.settings,
+        default=True,
+        enforce_type=True,
+    )
+
+    show_answer_option = String(
+        display_name="Show Answer Option",
         help="Whether Learner can see the correct answer or not",
         scope=Scope.settings,
-        default=False,
+        values=[
+            {"display_name": "Always", "value": ShowAnswerOption.ALWAYS},
+            {"display_name": "Never", "value": ShowAnswerOption.NEVER},
+        ],
+        default=ShowAnswerOption.ALWAYS,
         enforce_type=True,
     )
 
@@ -327,7 +347,7 @@ class TextMatchingXBlock(
     def _prepare_field_context(self, field_name: str):
         return self._make_field_info(field_name, self.fields[field_name])
 
-    def prepare_matching_zone_template_context(self) -> dict:
+    def get_student_view_context(self) -> dict:
         return {
             # Block content
             "display_name": self.display_name,
@@ -341,7 +361,9 @@ class TextMatchingXBlock(
                 }
                 for prompt_id, response_id in self.correct_answer.items()
             ],
-            "can_show_answer": self.can_show_answer,
+            "show_answer_button": self.can_show_answer(),
+            "show_reset_button": self.show_reset_button,
+            "show_save_button": self.show_save_button,
             # Attempt result
             "attempts_used": self.attempts_used,
             "max_attempts": self.max_attempts,
@@ -402,6 +424,12 @@ class TextMatchingXBlock(
                 eval_mode=data["evaluation_mode"]["value"],
                 is_edited=data["evaluation_mode"]["is_edited"],
             )
+        if "show_answer_option" in data:
+            self.show_answer_option = data["show_answer_option"]
+        if "show_save_button" in data:
+            self.show_answer_option = data["show_save_button"]
+        if "show_reset_button" in data:
+            self.show_answer_option = data["show_reset_button"]
         return {}
 
     def update_matching_items(self, items):
@@ -516,7 +544,7 @@ class TextMatchingXBlock(
                 "Can only receive answer in STANDARD mode"
             )
 
-        if not self.can_show_answer:
+        if not self.can_show_answer():
             raise JsonHandlerError(
                 403,
                 "The problem is not allowed to show answer"
@@ -525,6 +553,21 @@ class TextMatchingXBlock(
         return {
             "answer": self.correct_answer
         }
+
+    def can_show_answer(self) -> bool:
+        """
+        Determine whether the block can show answer to learner or not
+        """
+        is_shown = False
+        if self.show_answer_option == ShowAnswerOption.ALWAYS:
+            is_shown = True
+        elif self.show_answer_option == ShowAnswerOption.NEVER:
+            is_shown = False
+        elif self.show_answer_option == ShowAnswerOption.AFTER_ATTEMPTED and self.attempts_used >= 1:
+            is_shown = True
+
+        # TODO: Implement after_some_after and past_due later
+        return is_shown
 
     @staticmethod
     def workbench_scenarios():
