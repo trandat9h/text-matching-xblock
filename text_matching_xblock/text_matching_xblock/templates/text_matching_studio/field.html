@@ -5,7 +5,10 @@
                 {% if field.type == 'boolean' %}{{ field.default|yesno:'1,0' }}{% else %}{{ field.default|default_if_none:"" }}{% endif %}"
         data-cast="{{ field.type }}"
 >
-    <div class="wrapper-comp-setting{% if field.type == "set" %} metadata-list-enum {% endif %}">
+    <div
+            class="wrapper-comp-setting{% if field.type == "set" %} metadata-list-enum {% endif %}"
+            style="display: flex;align-items: start;"
+    >
         <label class="label setting-label" for="xb-field-edit-{{ field.name }}">{{ field.display_name }}</label>
 
         {% if field.type == "boolean" %}
@@ -87,12 +90,12 @@
             Unsupported field type. This setting cannot be edited.
         {% endif %}
 
-        {% if field.allow_reset %}
-            <button class="action setting-clear {% if field.is_set %}active{% else %}inactive{% endif %}" type="button"
-                    name="setting-clear" value="Clear" data-tooltip="Clear">
-                <i class="icon fa fa-undo"></i><span class="sr">Clear value</span>
-            </button>
-        {% endif %}
+{#        {% if field.allow_reset %}#}
+{#            <button class="action setting-clear {% if field.is_set %}active{% else %}inactive{% endif %}" type="button"#}
+{#                    name="setting-clear" value="Clear" data-tooltip="Clear">#}
+{#                <i class="icon fa fa-undo"></i><span class="sr">Clear value</span>#}
+{#            </button>#}
+{#        {% endif %}#}
     </div>
     {% if field.help %}
         <span class="tip setting-help"> {{ field.help|safe }} </span>

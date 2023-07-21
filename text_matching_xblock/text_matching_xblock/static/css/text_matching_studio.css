@@ -1,15 +1,39 @@
 .matching-item-row {
-
+    display: flex;
+    flex-direction: row;
+    margin: 20px 0;
+    box-sizing: border-box;
 }
 
 .matching-item-column {
+    flex: 5
 
 }
 
 .matching-item-subcolumn {
-
+    flex: 1
 }
 
 .btn-add-matching-item {
 
 }
+
+ul.matching-items-wrapper {
+    list-style: none !important;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+
+}
+
+.matching-items-wrapper > li {
+    border-bottom: 1px solid gray;
+}
+
+p.matching-item-column-title {
+    padding: 0;
+    margin: 0;
+
+}
+
+.

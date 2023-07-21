@@ -3,19 +3,22 @@
         data-field-name="Matching Section"
         data-cast="custom"
 >
-    <div class="wrapper-comp-setting{% if field.type == "set" %} metadata-list-enum {% endif %}">
+    <div
+            class="wrapper-comp-setting{% if field.type == "set" %} metadata-list-enum {% endif %}"
+            style="display: flex;align-items: start;"
+    >
         <label class="label setting-label" for="xb-field-edit-matching-section">
             Matching Section
         </label>
-        <div>
+        <div style="display: inline-block;width: 70%">
             <div class="matching-item-row">
                 <div class="matching-item-column">
-                    <p>
+                    <p class="matching-item-column-title">
                         Prompt
                     </p>
                 </div>
                 <div class="matching-item-column">
-                    <p>
+                    <p class="matching-item-column-title">
                         Response
                     </p>
                 </div>
