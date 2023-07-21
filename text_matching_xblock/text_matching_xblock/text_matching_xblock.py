@@ -7,33 +7,11 @@ from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, Scope, String, Dict, Float, Boolean
 
-from text_matching_xblock.enums import EvaluationMode
+from text_matching_xblock.enums import EvaluationMode, ShowAnswerOption
 from text_matching_xblock.utils import render_template, generate_random_id
 from xblock.scorable import ScorableXBlockMixin, Score
 from xblockutils.studio_editable import StudioEditableXBlockMixin
 from xblock.exceptions import JsonHandlerError
-
-
-@dataclasses.dataclass
-class Dropzone:
-    id: int
-
-
-@dataclasses.dataclass
-class OccupiedDropzone(Dropzone):
-    text: str
-    status: str = "occupied"
-
-
-@dataclasses.dataclass
-class BlankDropzone(Dropzone):
-    status: str = "blank"
-
-
-@dataclasses.dataclass
-class HollowDropzone(Dropzone):
-    text: str
-    status: str = "hollow"
 
 
 class TextMatchingXBlock(
@@ -113,9 +91,9 @@ class TextMatchingXBlock(
         display_name="Mode",
         help=(
             "Standard mode: the problem provides immediate feedback each time "
-            "a learner drops an item on a target zone. "
+            "a learner drops an item on a target zone.\n "
             "Assessment mode: the problem provides feedback only after "
-            "a learner drops all available items on target zones."
+            "a learner drops all available items on target zones.\n"
         ),
         scope=Scope.settings,
         values=[
@@ -202,6 +180,7 @@ class TextMatchingXBlock(
         values=[
             {"display_name": "Always", "value": ShowAnswerOption.ALWAYS},
             {"display_name": "Never", "value": ShowAnswerOption.NEVER},
+            {"display_name": "After First Submission", "value": ShowAnswerOption.AFTER_ATTEMPTED},
         ],
         default=ShowAnswerOption.ALWAYS,
         enforce_type=True,
@@ -220,19 +199,10 @@ class TextMatchingXBlock(
         - In LMS/Studio, use the location.html_id method.
         - In the workbench, use the usage_id.
         """
-        # TODO: Comment this below 3 lines since it needs further investigation for its unique
         # if hasattr(self, 'location'):
         #     _id = self.location.html_id()
         # else:
-        _id = self.scope_ids.usage_id
-
-        # This is a hacky way to make block id a valid CSS Selectors
-        # With html_id, "+" and ":" is not a valid CSS Selectors
-
-        # For usage_id, "." change CSS Selectors, so it needs to be replaced too.
-        # _id = _id.replace("+", "")
-        # _id = _id.replace(":", "")
-        # _id = _id.replace(".", "")
+        #     _id = self.scope_ids.usage_id
 
         _id = f'textmatching-xblock-{generate_random_id()}'
 
@@ -250,7 +220,6 @@ class TextMatchingXBlock(
         ]
         for js_url in js_urls:
             frag.add_javascript(self.resource_string(js_url))
-        frag.add_javascript_url("https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.js")
         score = self.get_score()
         frag.initialize_js(
             'TextMatchingXBlock',
@@ -269,7 +238,7 @@ class TextMatchingXBlock(
 
         html = render_template(
             template_name="text_matching_xblock.html",
-            context=self.prepare_matching_zone_template_context(),
+            context=self.get_student_view_context(),
         )
         frag.add_content(html)
 
@@ -280,7 +249,6 @@ class TextMatchingXBlock(
         )
         for css_resource in css_resources:
             frag.add_css(self.resource_string(css_resource))
-        frag.add_css_url("//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.css")
 
         return frag
 
@@ -307,7 +275,10 @@ class TextMatchingXBlock(
                 "evaluation_mode": {
                     "value": self.evaluation_mode,
                     "is_edited": self._is_evaluation_mode_manually_edited,
-                }
+                },
+                "show_answer_option": self.show_answer_option,
+                "show_reset_button": self.show_reset_button,
+                "show_save_button": self.show_save_button,
             }
         })
 
@@ -329,14 +300,15 @@ class TextMatchingXBlock(
                 ],
                 "weight": self._prepare_field_context("weight"),
                 "evaluation_mode": self._prepare_field_context("evaluation_mode"),
+                "show_answer_option": self._prepare_field_context("show_answer_option"),
+                "show_reset_button": self._prepare_field_context("show_reset_button"),
+                "show_save_button": self._prepare_field_context("show_save_button"),
             },
         )
         frag.add_content(html)
 
         css_resources = (
-            "static/css/text_matching_xblock.css",
-            "static/css/matching/block.css",
-            "static/css/matching/matching_zone.css"
+            "static/css/text_matching_studio.css",
         )
         for css_resource in css_resources:
             frag.add_css(self.resource_string(css_resource))
@@ -427,9 +399,11 @@ class TextMatchingXBlock(
         if "show_answer_option" in data:
             self.show_answer_option = data["show_answer_option"]
         if "show_save_button" in data:
-            self.show_answer_option = data["show_save_button"]
+            self.show_save_button = data["show_save_button"]
         if "show_reset_button" in data:
-            self.show_answer_option = data["show_reset_button"]
+            self.show_reset_button = data["show_reset_button"]
+
+        print(self.show_reset_button)
         return {}
 
     def update_matching_items(self, items):
@@ -455,15 +429,30 @@ class TextMatchingXBlock(
 
             _answer[prompt_id] = response_id
 
-        self.prompts, self.responses, self.correct_answer = (_prompts, _responses, _answer)
+        self.prompts = self._shuffle_dict(_prompts)
+        self.responses = self._shuffle_dict(_responses)
+        self.correct_answer = self._shuffle_dict(_answer)
+
+    @staticmethod
+    def _shuffle_dict(dict_to_shuffle: dict):
+        """
+        Python Dictionary is ordered after Python3.7 but random.shuffle() has not yet supported for this DS.
+        This method will shuffle by getting a list of key, shuffle and then reassign to each item value.
+        (in our case item key will be its 'id')
+        """
+        _keys = list(dict_to_shuffle.keys())
+        random.shuffle(_keys)
+
+        return {
+            _key: dict_to_shuffle[_key]
+            for _key in _keys
+        }
 
     def update_evaluation_mode(
         self,
         is_edited: bool,
         eval_mode: Optional[str] = None,
     ):
-        print(is_edited)
-        print(eval_mode)
         self._is_evaluation_mode_manually_edited = is_edited
 
         if is_edited:
@@ -496,7 +485,6 @@ class TextMatchingXBlock(
             )
         }
 
-        print(response)
         return response
 
     def has_submitted_answer(self) -> bool:

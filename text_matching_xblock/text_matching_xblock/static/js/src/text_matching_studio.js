@@ -17,11 +17,16 @@ function TextMatchingStudioXBlock(runtime, element, data) {
                     settings[fieldName]["is_edited"] = true
                 } else
                     settings[fieldName] = fieldValue
+            } else if (fieldType == 'boolean') {
+                console.debug(fieldValue)
+                settings[fieldName] = (fieldValue == 'true' || fieldValue == '1')
             } else if (fieldType === "text") {
                 settings[fieldName] = fieldValue
-            } else if (fieldType === "integer")
+            } else if (fieldType === "integer") {
                 settings[fieldName] = parseInt(fieldValue)
-            else if (fieldType === "custom") {
+            } else if (fieldType == "float") {
+                settings[fieldName] = parseFloat(fieldValue)
+            } else if (fieldType === "custom") {
                 // Do nothing, this type will have its own handler
             } else {
                 console.debug(`ERROR on parsing value ${fieldValue} of type ${fieldType} for field ${fieldValue}`)
