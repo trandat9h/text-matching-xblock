@@ -115,7 +115,13 @@ class TextMatchingXBlock(
     student_choices = Dict(
         default={},
         scope=Scope.user_state,
-        help="A mapping from prompt_id to response_id that has been matched so far."
+        help="A mapping from prompt_id to response_id that has been matched so far.",
+    )
+
+    student_latest_submitted_choices = Dict(
+        default={},
+        scope=Scope.user_state,
+        help="A mapping from prompt_id to response_id that for latest submission.",
     )
 
     _has_submitted_answer = Boolean(
@@ -227,6 +233,7 @@ class TextMatchingXBlock(
                 'xblock_id': self._get_xblock_unique_id(),
                 'responses': self.responses,
                 'learner_choice': self.student_choices,
+                'latest_submitted_choice': self.student_latest_submitted_choices,
                 'attempts_used': self.attempts_used,
                 'max_attempts': self.max_attempts,
                 'is_graded': self.is_graded(),
@@ -357,6 +364,8 @@ class TextMatchingXBlock(
                 "You have run out of possible attempts",
             )
         self.attempts_used = self.attempts_used + 1
+
+        self.student_latest_submitted_choices = self.student_choices
 
         # Evaluate submission and save score
         self.set_score(self.calculate_score())

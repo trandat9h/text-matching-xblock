@@ -1,9 +1,10 @@
 /* Javascript for TextMatchingXBlock. */
 
 function TextMatchingXBlock(runtime, element, data) {
-    let xblockId = data.xblock_id;
-    let responses = data.responses;
+    let xblockId = data.xblock_id
+    let responses = data.responses
     let learnerChoice = data.learner_choice
+    let latestSubmittedChoice = data.latest_submitted_choice
     let learnerTempChoice = JSON.parse(JSON.stringify(learnerChoice))
     let maxAttempts = data.max_attempts
     let attemptsUsed = data.attempts_used
@@ -53,7 +54,7 @@ function TextMatchingXBlock(runtime, element, data) {
 
         if (isAttemptFulfilled === true && canRetry === true) {
             if (hasSubmittedAnswer === true) {
-                if (!isObjectsEqual(learnerTempChoice, learnerChoice))
+                if (!isObjectsEqual(learnerTempChoice, latestSubmittedChoice))
                     isEnabled = true
             } else {
                 isEnabled = true
@@ -64,7 +65,6 @@ function TextMatchingXBlock(runtime, element, data) {
 
         console.debug("Start check submit state!")
         console.debug(learnerTempChoice)
-        console.debug(learnerChoice)
 
         console.debug(`is Equal: ${isEnabled}`)
     }
@@ -199,12 +199,17 @@ function TextMatchingXBlock(runtime, element, data) {
 
         // Update temp choice and recheck Submit button status (in this case Submit button should always be disabled
         hasSubmittedAnswer = true
+        latestSubmittedChoice = JSON.parse(JSON.stringify(learnerTempChoice))
         learnerChoice = JSON.parse(JSON.stringify(learnerTempChoice))
         checkSubmitState()
-
     }
 
-    // Handle learner submit event
+    function onSaveSuccess(response) {
+        learnerChoice = JSON.parse(JSON.stringify(learnerTempChoice))
+        checkSubmitState()
+    }
+
+    // Handle Submit event
     $('button.submit', element).click(function (eventObject) {
         $(this).find('span.submit-label').text('Submitting')
         $(this).prop('disabled', true)
@@ -224,6 +229,35 @@ function TextMatchingXBlock(runtime, element, data) {
             }
         });
     });
+
+    // Handle Save event
+    $('button.btn-save', element).click(function (eventObject) {
+        $.ajax({
+            type: "POST",
+            url: saveUrl,
+            data: JSON.stringify({
+                'learner_choice': learnerTempChoice
+            }),
+            success: function () {
+                $.ajax({
+                    type: "POST",
+                    url: saveUrl,
+                    data: JSON.stringify({}),
+                    success: onSaveSuccess
+                });
+            }
+        })
+    })
+
+    // Handle remove all responses
+    $('button.btn-reset', element).click(function(eventObject) {
+        $('.matching-item-wrapper .btn-reset-response').each(function () {
+            const promptId = $(this).data('prompt-id')
+            if (learnerTempChoice[promptId] !== null)
+                updateChoice(promptId, null)
+            }
+        )
+    })
 
     function showAnswer(answer) {
         showAttemptCorrectness(answer)
