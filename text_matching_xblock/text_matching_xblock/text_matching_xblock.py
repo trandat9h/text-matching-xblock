@@ -187,8 +187,10 @@ class TextMatchingXBlock(
             {"display_name": "Always", "value": ShowAnswerOption.ALWAYS},
             {"display_name": "Never", "value": ShowAnswerOption.NEVER},
             {"display_name": "After First Submission", "value": ShowAnswerOption.AFTER_ATTEMPTED},
+            {"display_name": "After No Possible Attempts Left", "value": ShowAnswerOption.AFTER_ATTEMPTS_RUN_OUT},
+            {"display_name": "After the section is past due", "value": ShowAnswerOption.PAST_DUE},
         ],
-        default=ShowAnswerOption.ALWAYS,
+        default=ShowAnswerOption.AFTER_ATTEMPTED,
         enforce_type=True,
     )
 
@@ -576,6 +578,11 @@ class TextMatchingXBlock(
             is_shown = False
         elif self.show_answer_option == ShowAnswerOption.AFTER_ATTEMPTED and self.attempts_used >= 1:
             is_shown = True
+        elif self.show_answer_option == ShowAnswerOption.AFTER_ATTEMPTS_RUN_OUT and self.attempts_used >= self.max_attempts:
+            is_shown = True
+        elif self.show_answer_option == ShowAnswerOption.PAST_DUE:
+            # No implement yet since can not test docker local clock
+            is_shown = False
 
         # TODO: Implement after_some_after and past_due later
         return is_shown

@@ -23,5 +23,6 @@ class ShowAnswerOption(BaseEnum):
     ALWAYS = 'always'
     NEVER = 'never'
     PAST_DUE = 'past_due'
-    AFTER_SOME_ATTEMPTS = 'after_some_attempts'
+    AFTER_ATTEMPTS_RUN_OUT = 'after_attempts_run_out'
     AFTER_ATTEMPTED = 'after_attempted'
+
