@@ -156,7 +156,7 @@ function TextMatchingXBlock(runtime, element, data) {
 
     function onSubmitSuccess(response) {
         attemptsUsed++;
-        let {result, weight_score_earned, weight_score_possible} = response
+        let {result, weight_score_earned, weight_score_possible, can_show_answer, answer} = response
 
         let resultNotificationClassSelector, notificationMessage
         if (result === "correct") {
@@ -196,6 +196,10 @@ function TextMatchingXBlock(runtime, element, data) {
 
         // Revert Submitting text message to Submit for next submission (if any)
         $('button.submit', element).find('span.submit-label').text('Submit')
+
+        if (can_show_answer === true) {
+            showAnswer(answer)
+        }
 
         // Update temp choice and recheck Submit button status (in this case Submit button should always be disabled
         hasSubmittedAnswer = true
@@ -287,6 +291,7 @@ function TextMatchingXBlock(runtime, element, data) {
         $('.MatchingZone .matching-item-wrapper', element).each(function () {
             const promptId = $(this).data('prompt-id')
             const $answer = $(this).find('.answer-wrapper')
+            $answer.empty()
             $answer.append(`<p>${responses[answer[promptId]].text}</p>`)
         })
     }

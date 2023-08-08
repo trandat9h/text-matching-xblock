@@ -267,6 +267,12 @@ class TextMatchingXBlock(
         ]
         for js_url in js_urls:
             frag.add_javascript(self.resource_string(js_url))
+
+        # Update evaluation mode MUST be called before init any js or template context
+        self.update_evaluation_mode(
+            is_edited=self._is_evaluation_mode_manually_edited,
+            eval_mode=self.evaluation_mode,
+        )
         frag.initialize_js('TextMatchingStudioXBlock', {
             'settings': {
                 "display_name": self.display_name,
@@ -289,10 +295,6 @@ class TextMatchingXBlock(
             }
         })
 
-        self.update_evaluation_mode(
-            is_edited=self._is_evaluation_mode_manually_edited,
-            eval_mode=self.evaluation_mode,
-        )
         html = render_template(
             template_name="text_matching_studio.html",
             context={
@@ -380,18 +382,29 @@ class TextMatchingXBlock(
         else:
             result = "partially_correct"
 
+        if self.can_show_answer():
+            answer_response = {
+                "can_show_answer": True,
+                "answer": self.correct_answer,
+            }
+        else:
+            answer_response = {
+                "can_show_answer": False,
+                "answer": None,
+            }
+
         return {
             "result": result,
             "weight_score_earned": score.raw_earned * self.weight,
             "weight_score_possible": score.raw_possible * self.weight,
             "attempts_used": self.attempts_used,
+            **answer_response,
         }
 
     @XBlock.json_handler
     def studio_submit(self, data, suffix=''):
         print("Editor has update setting.")
         print(data)
-        # TODO: Validate data
         if "display_name" in data:
             self.display_name = data["display_name"]
         if "description" in data:
@@ -472,6 +485,7 @@ class TextMatchingXBlock(
         # If Course editor does not modify this setting, get the value from 'graded' attribute
         if self.is_graded():
             self.evaluation_mode = EvaluationMode.ASSESSMENT
+            self.show_answer_option = ShowAnswerOption.NEVER
             return
 
         self.evaluation_mode = EvaluationMode.STANDARD
