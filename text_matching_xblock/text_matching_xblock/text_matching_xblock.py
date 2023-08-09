@@ -26,7 +26,7 @@ class TextMatchingXBlock(
 
     display_name = String(
         display_name="Title",
-        help="The title of the problem. The title is displayed to learners.",
+        help="The display name for this component.",
         scope=Scope.settings,
         default="Text Matching Xblock",
         enforce_type=True,
@@ -133,7 +133,7 @@ class TextMatchingXBlock(
 
     weight = Float(
         display_name="Problem Weight",
-        help="Defines the number of points the problem is worth.",
+        help="Defines the number of points each problem is worth. If the value is not set, each response field in the problem is worth one point.",
         scope=Scope.settings,
         default=1.0,
         enforce_type=True,
@@ -165,7 +165,7 @@ class TextMatchingXBlock(
 
     show_reset_button = Boolean(
         display_name="Show Reset Button",
-        help="Show Reset Button to allow learner to reset their choice",
+        help="Determines whether a 'Reset' button is shown so the user may reset their answer.",
         scope=Scope.settings,
         default=True,
         enforce_type=True,
@@ -480,7 +480,6 @@ class TextMatchingXBlock(
         self._is_evaluation_mode_manually_edited = is_edited
 
         if is_edited:
-            # TODO: Validate evaluate_mode here
             self.evaluation_mode = eval_mode
             return
 
