@@ -242,6 +242,7 @@ class TextMatchingXBlock(
                 "has_submitted_answer": self.has_submitted_answer(),
                 "weight_score_earned": score.raw_earned * self.weight,
                 "weight_score_possible": score.raw_possible * self.weight,
+                "can_show_answer": self.can_show_answer(),
             }
         )
 
@@ -279,6 +280,7 @@ class TextMatchingXBlock(
             'settings': {
                 "display_name": self.display_name,
                 "description": self.description,
+                "max_attempts": self.max_attempts,
                 "matching_items": [
                     {
                         "prompt": self.prompts[prompt_id]["text"],
@@ -302,6 +304,7 @@ class TextMatchingXBlock(
             context={
                 "display_name": self._prepare_field_context("display_name"),
                 "description": self._prepare_field_context("description"),
+                "max_attempts": self._prepare_field_context("max_attempts"),
                 "matching_items": [
                     {
                         "prompt": self.prompts[prompt_id],
@@ -376,16 +379,19 @@ class TextMatchingXBlock(
 
         self._publish_grade(self.get_score())
 
-        score = self.get_score()
-        if score.raw_earned == score.raw_possible:
-            result = "correct"
-        elif score.raw_earned == 0:
-            result = "incorrect"
-        else:
-            result = "partially_correct"
-
         if self.can_show_answer():
+            score = self.get_score()
+            if score.raw_earned == score.raw_possible:
+                result = "correct"
+            elif score.raw_earned == 0:
+                result = "incorrect"
+            else:
+                result = "partially_correct"
+
             answer_response = {
+                "result": result,
+                "weight_score_earned": score.raw_earned * self.weight,
+                "weight_score_possible": score.raw_possible * self.weight,
                 "can_show_answer": True,
                 "answer": self.correct_answer,
             }
@@ -396,9 +402,6 @@ class TextMatchingXBlock(
             }
 
         return {
-            "result": result,
-            "weight_score_earned": score.raw_earned * self.weight,
-            "weight_score_possible": score.raw_possible * self.weight,
             "attempts_used": self.attempts_used,
             **answer_response,
         }
@@ -487,6 +490,7 @@ class TextMatchingXBlock(
         if self.is_graded():
             self.evaluation_mode = EvaluationMode.ASSESSMENT
             self.show_answer_option = ShowAnswerOption.NEVER
+            self.max_attempts = -1
             return
 
         self.evaluation_mode = EvaluationMode.STANDARD

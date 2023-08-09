@@ -12,6 +12,7 @@ function TextMatchingXBlock(runtime, element, data) {
     let hasSubmittedAnswer = data.has_submitted_answer
     let weightScoreEarned = data.weight_score_earned
     let weightScorePossible = data.weight_score_possible
+    let canShowAnswer = data.can_show_answer
 
     // Bind onChange event listener to all select element
     $('.response-wrapper select', element).each(function () {
@@ -137,16 +138,18 @@ function TextMatchingXBlock(runtime, element, data) {
         checkSubmitState()
     }
 
-    function getProgressMessage(_isGraded, _hasSubmittedAnswer, earned, possible) {
-        let _progressMsg, _isGradedMsg
-        if (_hasSubmittedAnswer === false)
+    function getProgressMessage(canShowAnswer, _isGraded, _hasSubmittedAnswer, earned, possible) {
+        let _progressMsg, _isGradedMsg, _showAnswerMsg
+
+        if (canShowAnswer === false || _hasSubmittedAnswer === false)
             _progressMsg = `${possible} points possible`
         else
             _progressMsg = `${earned}/${possible} point`
 
-        _isGradedMsg = _isGraded ? "(graded)" : "(ungraded)"
+        _isGradedMsg = _isGraded ? "(graded" : "(ungraded"
+        _showAnswerMsg = canShowAnswer ? ")": ", result is hidden)"
 
-        return `${_progressMsg} ${_isGradedMsg}`
+        return `${_progressMsg} ${_isGradedMsg}${_showAnswerMsg}`
     }
 
     // Get Handler URL from XBlock runtime
@@ -154,24 +157,11 @@ function TextMatchingXBlock(runtime, element, data) {
     let submitUrl = runtime.handlerUrl(element, 'submit');
     let showAnswerUrl = runtime.handlerUrl(element, 'show_answer')
 
-    function onSubmitSuccess(response) {
-        attemptsUsed++;
-        let {result, weight_score_earned, weight_score_possible, can_show_answer, answer} = response
-
+    function updateNotificationMessage(status, message) {
         let resultNotificationClassSelector, notificationMessage
-        if (result === "correct") {
-            resultNotificationClassSelector = "correct-answer"
-            notificationMessage = "Correct"
-        } else if (result === "incorrect") {
-            resultNotificationClassSelector = "incorrect-answer"
-            notificationMessage = "Incorrect"
-        } else {
-            resultNotificationClassSelector = "partially-correct-answer"
-            notificationMessage = "Partial Correct"
-        }
 
-        resultNotificationClassSelector = `.notification.${resultNotificationClassSelector}`
-        notificationMessage = `${notificationMessage} (${weight_score_earned}/${weight_score_possible} points)`
+        resultNotificationClassSelector = `.notification.${status}`
+
         // Show the result notification color section
         // Make sure all notification element is hidden first,
         // this is useful when learner re-score and the result has changed
@@ -179,27 +169,54 @@ function TextMatchingXBlock(runtime, element, data) {
         $(resultNotificationClassSelector, element).removeClass("is-hidden")
 
         // Update notification message
-        $(`${resultNotificationClassSelector} > .notification-message`, element).text(notificationMessage)
+        $(`${resultNotificationClassSelector} > .notification-message`, element).text(message)
+    }
+
+    function onSubmitSuccess(response) {
+        attemptsUsed++;
+        let {result, weight_score_earned, weight_score_possible, can_show_answer, answer} = response
 
         // Update submission feedback message
         if (maxAttempts !== -1)
             $('.submission-feedback', element).text(`You have used ${attemptsUsed} of ${maxAttempts} attempts.`)
 
-        // Update progress message
-        $('.problem-progress', element).text(
-            getProgressMessage(
-                isGraded,
-                true,
-                weight_score_earned,
-                weight_score_possible,
-            ))
+        if (can_show_answer === true) {
+            let _status, notificationMessage
+
+            if (result === "correct") {
+                _status = "correct-answer"
+                notificationMessage = "Correct"
+            } else if (result === "incorrect") {
+                _status = "incorrect-answer"
+                notificationMessage = "Incorrect"
+            } else {
+                _status = "partially-correct-answer"
+                notificationMessage = "Partial Correct"
+            }
+            notificationMessage = `${notificationMessage} (${weight_score_earned}/${weight_score_possible} points)`
+
+            updateNotificationMessage(_status, notificationMessage)
+
+            // Update progress message
+            $('.problem-progress', element).text(
+                getProgressMessage(
+                    true,
+                    isGraded,
+                    true,
+                    weight_score_earned,
+                    weight_score_possible,
+                ))
+
+            showAnswer(answer)
+        } else {
+            updateNotificationMessage(
+                "general",
+                "Your answer has been received."
+            )
+        }
 
         // Revert Submitting text message to Submit for next submission (if any)
         $('button.submit', element).find('span.submit-label').text('Submit')
-
-        if (can_show_answer === true) {
-            showAnswer(answer)
-        }
 
         // Update temp choice and recheck Submit button status (in this case Submit button should always be disabled
         hasSubmittedAnswer = true
@@ -211,6 +228,11 @@ function TextMatchingXBlock(runtime, element, data) {
     function onSaveSuccess(response) {
         learnerChoice = JSON.parse(JSON.stringify(learnerTempChoice))
         checkSubmitState()
+
+        updateNotificationMessage(
+            "general",
+            "Your attempt has been saved."
+        )
     }
 
     // Handle Submit event
@@ -326,6 +348,7 @@ function TextMatchingXBlock(runtime, element, data) {
         // Update progress message
         $('.problem-progress', element).text(
             getProgressMessage(
+                canShowAnswer,
                 isGraded,
                 hasSubmittedAnswer,
                 weightScoreEarned,
