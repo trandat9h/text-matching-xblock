@@ -26,8 +26,8 @@
     flex: 1;
 }
 
-.prompt-wrapper {
-    vertical-align: center;
+.prompt-wrapper p {
+   margin-bottom: 0;
 }
 
 .btn-reset-response {
@@ -62,4 +62,9 @@
 .response-wrapper {
     display: flex;
     flex-direction: row;
+    align-items: center;
+}
+
+.response-wrapper label {
+    margin-bottom: 0;
 }

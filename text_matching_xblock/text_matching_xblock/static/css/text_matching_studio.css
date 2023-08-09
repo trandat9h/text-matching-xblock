@@ -6,16 +6,22 @@
 }
 
 .matching-item-column {
-    flex: 5
+    flex: 5;
+}
 
+.matching-item-column input{
+    width: 350px !important;
 }
 
 .matching-item-subcolumn {
+    display: flex;
+    align-items: center;
     flex: 1
 }
 
 .btn-add-matching-item {
-
+    margin-top: 10px;
+    height: 30px;
 }
 
 ul.matching-items-wrapper {
@@ -33,7 +39,14 @@ ul.matching-items-wrapper {
 p.matching-item-column-title {
     padding: 0;
     margin: 0;
-
 }
 
-.
+.btn-remove-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-remove-item:hover {
+    color: red;
+}
