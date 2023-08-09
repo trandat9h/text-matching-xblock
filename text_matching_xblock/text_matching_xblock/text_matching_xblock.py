@@ -397,6 +397,9 @@ class TextMatchingXBlock(
             }
         else:
             answer_response = {
+                "result": None,
+                "weight_score_earned": None,
+                "weight_score_possible": None,
                 "can_show_answer": False,
                 "answer": None,
             }

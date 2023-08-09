@@ -158,7 +158,7 @@ function TextMatchingXBlock(runtime, element, data) {
     let showAnswerUrl = runtime.handlerUrl(element, 'show_answer')
 
     function updateNotificationMessage(status, message) {
-        let resultNotificationClassSelector, notificationMessage
+        let resultNotificationClassSelector
 
         resultNotificationClassSelector = `.notification.${status}`
 
@@ -264,14 +264,7 @@ function TextMatchingXBlock(runtime, element, data) {
             data: JSON.stringify({
                 'learner_choice': learnerTempChoice
             }),
-            success: function () {
-                $.ajax({
-                    type: "POST",
-                    url: saveUrl,
-                    data: JSON.stringify({}),
-                    success: onSaveSuccess
-                });
-            }
+            success: onSaveSuccess,
         })
     })
 
@@ -357,5 +350,10 @@ function TextMatchingXBlock(runtime, element, data) {
 
         checkSubmitState()
         populateAvailableResponses()
+        if (hasSubmittedAnswer === true)
+            updateNotificationMessage(
+                "general",
+                "Your attempt has been saved."
+            )
     })
 }

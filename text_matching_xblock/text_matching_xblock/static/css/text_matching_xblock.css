@@ -12,6 +12,10 @@
     padding: 0 10px;
 }
 
+.answer-wrapper > p {
+    margin-bottom: 0 !important;
+}
+
 .choice_incorrect {
     border: 2px solid #b20610 !important;
 }
