@@ -147,7 +147,7 @@ function TextMatchingXBlock(runtime, element, data) {
             _progressMsg = `${earned}/${possible} point`
 
         _isGradedMsg = _isGraded ? "(graded" : "(ungraded"
-        _showAnswerMsg = canShowAnswer ? ")": ", result is hidden)"
+        _showAnswerMsg = canShowAnswer ? ")": ", results hidden)"
 
         return `${_progressMsg} ${_isGradedMsg}${_showAnswerMsg}`
     }
@@ -218,7 +218,7 @@ function TextMatchingXBlock(runtime, element, data) {
         } else {
             updateNotificationMessage(
                 "general",
-                "Your answer has been received."
+                "Answer submitted."
             )
         }
 
@@ -362,7 +362,7 @@ function TextMatchingXBlock(runtime, element, data) {
         if (hasSubmittedAnswer === true)
             updateNotificationMessage(
                 "general",
-                "Your attempt has been saved."
+                "Answer submitted."
             )
     })
 }
