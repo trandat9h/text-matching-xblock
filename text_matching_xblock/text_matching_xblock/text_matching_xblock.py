@@ -419,6 +419,8 @@ class TextMatchingXBlock(
             self.description = data["description"]
         if "weight" in data:
             self.weight = data['weight']
+        if "max_attempts" in data:
+            self.max_attempts = data["max_attempts"]
         if "matching_items" in data:
             self.update_matching_items(data["matching_items"])
         if "evaluation_mode" in data:
