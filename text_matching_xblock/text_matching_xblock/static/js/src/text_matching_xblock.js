@@ -157,6 +157,13 @@ function TextMatchingXBlock(runtime, element, data) {
     let submitUrl = runtime.handlerUrl(element, 'submit');
     let showAnswerUrl = runtime.handlerUrl(element, 'show_answer')
 
+    function hideNotificationMessage() {
+        // Show the result notification color section
+        // Make sure all notification element is hidden first,
+        // this is useful when learner re-score and the result has changed
+        $('.notification', element).addClass("is-hidden")
+    }
+
     function updateNotificationMessage(status, message) {
         let resultNotificationClassSelector
 
@@ -258,6 +265,7 @@ function TextMatchingXBlock(runtime, element, data) {
 
     // Handle Save event
     $('button.btn-save', element).click(function (eventObject) {
+        hideNotificationMessage()
         $.ajax({
             type: "POST",
             url: saveUrl,
@@ -270,6 +278,7 @@ function TextMatchingXBlock(runtime, element, data) {
 
     // Handle remove all responses
     $('button.btn-reset', element).click(function(eventObject) {
+        hideNotificationMessage()
         $('.matching-item-wrapper .btn-reset-response').each(function () {
             const promptId = $(this).data('prompt-id')
             if (learnerTempChoice[promptId] !== null)
